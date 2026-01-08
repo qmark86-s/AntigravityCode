@@ -1,0 +1,247 @@
+{
+    "weapons": [
+        {
+            "id": "fist",
+            "name": "맨주먹",
+            "baseAtk": 0,
+            "grade": "common",
+            "price": 0,
+            "icon": "👊"
+        },
+        {
+            "id": "wooden_sword",
+            "name": "목검",
+            "baseAtk": 5,
+            "grade": "common",
+            "price": 100,
+            "icon": "assets/weapons/wooden_sword.png"
+        },
+        {
+            "id": "rusty_dagger",
+            "name": "녹슨 단검",
+            "baseAtk": 8,
+            "grade": "common",
+            "price": 200,
+            "icon": "assets/weapons/rusty_dagger.png"
+        },
+        {
+            "id": "iron_sword",
+            "name": "철검",
+            "baseAtk": 15,
+            "grade": "common",
+            "price": 500,
+            "icon": "assets/weapons/iron_sword.png"
+        },
+        {
+            "id": "steel_axe",
+            "name": "강철 도끼",
+            "baseAtk": 22,
+            "grade": "common",
+            "price": 1000,
+            "icon": "assets/weapons/steel_axe.png"
+        },
+        {
+            "id": "golden_axe",
+            "name": "황금도끼",
+            "baseAtk": 35,
+            "grade": "uncommon",
+            "price": 2000,
+            "icon": "assets/weapons/golden_axe.png"
+        },
+        {
+            "id": "silver_lance",
+            "name": "은창",
+            "baseAtk": 45,
+            "grade": "uncommon",
+            "price": 3500,
+            "icon": "assets/weapons/silver_lance.png"
+        },
+        {
+            "id": "katana",
+            "name": "카타나",
+            "baseAtk": 55,
+            "grade": "uncommon",
+            "price": 5000,
+            "icon": "assets/weapons/katana.png"
+        },
+        {
+            "id": "flame_sword",
+            "name": "화염검",
+            "baseAtk": 70,
+            "grade": "uncommon",
+            "price": 8000,
+            "icon": "assets/weapons/flame_sword.png"
+        },
+        {
+            "id": "ice_blade",
+            "name": "빙결검",
+            "baseAtk": 85,
+            "grade": "rare",
+            "price": 12000,
+            "icon": "assets/weapons/ice_blade.png"
+        },
+        {
+            "id": "magic_staff",
+            "name": "마법 지팡이",
+            "baseAtk": 100,
+            "grade": "rare",
+            "price": 18000,
+            "icon": "assets/weapons/magic_staff.png"
+        },
+        {
+            "id": "thunder_hammer",
+            "name": "번개 망치",
+            "baseAtk": 120,
+            "grade": "rare",
+            "price": 25000,
+            "icon": "assets/weapons/thunder_hammer.png"
+        },
+        {
+            "id": "laser_sword",
+            "name": "레이저검",
+            "baseAtk": 140,
+            "grade": "rare",
+            "price": 35000,
+            "icon": "assets/weapons/laser_sword.png"
+        },
+        {
+            "id": "cursed_blade",
+            "name": "저주받은 검",
+            "baseAtk": 165,
+            "grade": "rare",
+            "price": 50000,
+            "icon": "assets/weapons/cursed_blade.png"
+        },
+        {
+            "id": "holy_sword",
+            "name": "성검",
+            "baseAtk": 200,
+            "grade": "epic",
+            "price": 80000,
+            "icon": "assets/weapons/holy_sword.png"
+        },
+        {
+            "id": "demon_scythe",
+            "name": "악마의 낫",
+            "baseAtk": 240,
+            "grade": "epic",
+            "price": 120000,
+            "icon": "assets/weapons/demon_scythe.png"
+        },
+        {
+            "id": "phoenix_blade",
+            "name": "불사조 검",
+            "baseAtk": 280,
+            "grade": "epic",
+            "price": 180000,
+            "icon": "assets/weapons/phoenix_blade.png"
+        },
+        {
+            "id": "dragon_fang",
+            "name": "용의 이빨",
+            "baseAtk": 330,
+            "grade": "epic",
+            "price": 250000,
+            "icon": "assets/weapons/dragon_fang.png"
+        },
+        {
+            "id": "titan_hammer",
+            "name": "타이탄 망치",
+            "baseAtk": 400,
+            "grade": "epic",
+            "price": 350000,
+            "icon": "assets/weapons/titan_hammer.png"
+        },
+        {
+            "id": "void_blade",
+            "name": "공허의 검",
+            "baseAtk": 500,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/void_blade.png"
+        },
+        {
+            "id": "excalibur",
+            "name": "엑스칼리버",
+            "baseAtk": 600,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/excalibur.png"
+        },
+        {
+            "id": "mjolnir",
+            "name": "묠니르",
+            "baseAtk": 750,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/mjolnir.png"
+        },
+        {
+            "id": "dragon_slayer",
+            "name": "용살자",
+            "baseAtk": 900,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/dragon_slayer.png"
+        },
+        {
+            "id": "ragnarok",
+            "name": "라그나로크",
+            "baseAtk": 1100,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/ragnarok.png"
+        },
+        {
+            "id": "genesis",
+            "name": "창세의 검",
+            "baseAtk": 1500,
+            "grade": "legendary",
+            "price": 0,
+            "icon": "assets/weapons/genesis.png"
+        }
+    ],
+    "grades": {
+        "common": {
+            "name": "일반",
+            "color": "#9e9e9e",
+            "multiplier": 1.0
+        },
+        "uncommon": {
+            "name": "고급",
+            "color": "#4caf50",
+            "multiplier": 1.5
+        },
+        "rare": {
+            "name": "레어",
+            "color": "#2196f3",
+            "multiplier": 2.0
+        },
+        "epic": {
+            "name": "에픽",
+            "color": "#9c27b0",
+            "multiplier": 3.0
+        },
+        "legendary": {
+            "name": "전설",
+            "color": "#ff9800",
+            "multiplier": 5.0
+        }
+    },
+    "gacha": {
+        "goldCost": 500,
+        "diamondCost": 100,
+        "tenPullCost": 900,
+        "rates": {
+            "common": 50,
+            "uncommon": 30,
+            "rare": 15,
+            "epic": 4,
+            "legendary": 1
+        },
+        "pity": {
+            "epic": 50,
+            "legendary": 100
+        }
+    }
+}

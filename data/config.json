@@ -1,0 +1,66 @@
+{
+    "player": {
+        "baseStats": {
+            "hp": 100,
+            "atk": 10,
+            "aspd": 1.0,
+            "critRate": 5,
+            "critDmg": 150
+        },
+        "statPerPoint": {
+            "atk": 2,
+            "maxHp": 10,
+            "aspd": 0.02,
+            "critRate": 0.5,
+            "critDmg": 5
+        },
+        "pointsPerLevel": 5
+    },
+    "scaling": {
+        "monsterHpPerStage": 0.1,
+        "monsterAtkPerStage": 0.1,
+        "expPerStage": 0.1,
+        "goldPerStage": 0.1,
+        "expToNextLevel": 1.2
+    },
+    "shop": {
+        "potion": {
+            "name": "체력 회복",
+            "price": 50,
+            "effect": "fullHeal"
+        },
+        "atkBoost": {
+            "name": "공격력 +5",
+            "price": 100,
+            "stat": "atk",
+            "amount": 5
+        },
+        "aspdBoost": {
+            "name": "공격속도 +0.1",
+            "price": 150,
+            "stat": "aspd",
+            "amount": 0.1
+        },
+        "critRateBoost": {
+            "name": "치명타확률 +1%",
+            "price": 200,
+            "stat": "critRate",
+            "amount": 1
+        },
+        "critDmgBoost": {
+            "name": "치명타배수 +10%",
+            "price": 250,
+            "stat": "critDmg",
+            "amount": 10
+        },
+        "gacha": {
+            "name": "무기 뽑기",
+            "price": 200
+        }
+    },
+    "backgrounds": {
+        "wall": "assets/textures/wall.png",
+        "floor": "#1a1a1a",
+        "ceiling": "#050505"
+    }
+}

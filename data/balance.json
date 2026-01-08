@@ -1,0 +1,44 @@
+{
+    "weapons": [
+        { "id": 0, "name": "맨주먹", "atk": 0, "price": 0, "icon": "👊" },
+        { "id": 1, "name": "목검", "atk": 5, "price": 100, "icon": "🪵" },
+        { "id": 2, "name": "철검", "atk": 15, "price": 500, "icon": "🗡️" },
+        { "id": 3, "name": "황금도끼", "atk": 30, "price": 1500, "icon": "🪓" },
+        { "id": 4, "name": "레이저검", "atk": 50, "price": 5000, "icon": "⚡" }
+    ],
+    "monsters": [
+        { "id": 0, "name": "슬라임", "hp": 30, "atk": 5, "def": 0, "aspd": 0.8, "exp": 10, "gold": 15, "icon": "💧" },
+        { "id": 1, "name": "고블린", "hp": 50, "atk": 8, "def": 2, "aspd": 1.0, "exp": 20, "gold": 25, "icon": "👺" },
+        { "id": 2, "name": "오크", "hp": 80, "atk": 12, "def": 5, "aspd": 0.7, "exp": 35, "gold": 40, "icon": "👹" },
+        { "id": 3, "name": "스켈레톤", "hp": 60, "atk": 15, "def": 3, "aspd": 1.2, "exp": 30, "gold": 30, "icon": "💀" },
+        { "id": 4, "name": "드래곤", "hp": 150, "atk": 25, "def": 10, "aspd": 0.6, "exp": 100, "gold": 100, "icon": "🐉" }
+    ],
+    "playerBase": {
+        "hp": 100,
+        "atk": 10,
+        "aspd": 1.0,
+        "critRate": 5,
+        "critDmg": 150
+    },
+    "statPerPoint": {
+        "atk": 2,
+        "maxHp": 10,
+        "aspd": 0.02,
+        "critRate": 0.5,
+        "critDmg": 5
+    },
+    "levelUp": {
+        "pointsPerLevel": 5,
+        "expMultiplier": 1.2
+    },
+    "scaling": {
+        "monsterHpPerStage": 0.1,
+        "monsterAtkPerStage": 0.1,
+        "rewardPerStage": 0.1
+    },
+    "backgrounds": [
+        { "id": 0, "name": "벽", "type": "image", "value": "" },
+        { "id": 1, "name": "바닥", "type": "image", "value": "" },
+        { "id": 2, "name": "천장", "type": "color", "value": "#050505" }
+    ]
+}
