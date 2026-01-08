@@ -889,7 +889,6 @@
         </div>
 
         <div id="hands">
-            <div id="left-hand" class="hand-slot">🛡️</div>
             <div id="right-hand" class="hand-slot">
                 <span id="hand-emoji">👊</span>
                 <img id="hand-img" class="hand-img" style="display:none;">
@@ -900,6 +899,15 @@
     <div id="ui-panel">
         <div>👤 Lv.<span id="ui-lv">1</span> <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span
                     id="ui-maxhp">100</span></span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
+            <div style="flex:1;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+                <div id="exp-bar-fill"
+                    style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#9b59b6);transition:width 0.3s;">
+                </div>
+            </div>
+            <span style="font-size:10px;color:#888;">EXP <span id="ui-exp">0</span>/<span
+                    id="ui-maxexp">100</span></span>
+        </div>
         <div style="text-align:center">
             <div style="display:flex;justify-content:center;gap:15px;">
                 <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
@@ -1117,7 +1125,7 @@
                 this.p = {
                     hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
                     atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
-                    gold: 0, diamond: 1000, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 0, pityCount: 0,
+                    gold: 0, diamond: 1000, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
                     invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 }
                 };
                 this.stage = 1;
@@ -1570,6 +1578,12 @@
                 document.getElementById('ui-maxhp').innerText = NumFormat.format(this.p.maxHp);
                 document.getElementById('ui-gold').innerText = NumFormat.format(this.p.gold);
                 document.getElementById('ui-diamond').innerText = NumFormat.format(this.p.diamond);
+
+                // EXP 바 업데이트
+                document.getElementById('ui-exp').innerText = this.p.exp;
+                document.getElementById('ui-maxexp').innerText = this.p.maxExp;
+                const expPercent = (this.p.exp / this.p.maxExp) * 100;
+                document.getElementById('exp-bar-fill').style.width = Math.min(100, expPercent) + '%';
 
                 const w = this.r.weapons[this.p.wIdx];
                 const weaponAtk = this.getWeaponAtk(w);
