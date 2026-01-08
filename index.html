@@ -310,8 +310,10 @@
             background: rgba(0, 0, 0, 0.9);
             z-index: 2000;
             display: none;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            padding: 40px;
+            overflow-y: auto;
         }
 
         .shop-window {
@@ -347,8 +349,10 @@
             background: rgba(0, 0, 0, 0.9);
             z-index: 2000;
             display: none;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            padding: 40px;
+            overflow-y: auto;
         }
 
         .stat-window {
@@ -370,8 +374,10 @@
             background: rgba(0, 0, 0, 0.9);
             z-index: 2000;
             display: none;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            padding: 40px;
+            overflow-y: auto;
         }
 
         #settings-overlay {
@@ -1332,10 +1338,8 @@
             }
 
             openShop() {
-                if (this.state !== 'WALK' && this.state !== 'SHOP' && this.state !== 'GACHA') return;
+                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
-                this.state = 'SHOP';
-                document.querySelector('.tunnel-container').classList.remove('moving');
                 document.getElementById('shop-overlay').style.display = 'flex';
                 document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
 
@@ -1351,8 +1355,10 @@
 
             closeShop() {
                 document.getElementById('shop-overlay').style.display = 'none';
-                this.state = 'WALK';
-                this.walk();
+                // 이전 상태가 BATTLE이었다면 전투 재개
+                if (this.previousState === 'BATTLE') {
+                    this.state = 'BATTLE';
+                }
             }
 
             updateShopEquipment() {
@@ -1416,10 +1422,8 @@
 
             // 뽑기 관련 함수
             openGacha() {
-                if (this.state !== 'WALK' && this.state !== 'SHOP' && this.state !== 'GACHA') return;
+                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
-                this.state = 'GACHA';
-                document.querySelector('.tunnel-container').classList.remove('moving');
                 document.getElementById('gacha-overlay').style.display = 'flex';
                 document.getElementById('gacha-diamond').innerText = NumFormat.format(this.p.diamond);
                 document.getElementById('gacha-pity').innerText = this.p.pityCount;
@@ -1428,8 +1432,9 @@
 
             closeGacha() {
                 document.getElementById('gacha-overlay').style.display = 'none';
-                this.state = 'WALK';
-                this.walk();
+                if (this.previousState === 'BATTLE') {
+                    this.state = 'BATTLE';
+                }
             }
 
             doGacha(count) {
@@ -1622,7 +1627,7 @@
 
             // 스탯 패널
             openStatPanel() {
-                if (this.state !== 'WALK' && this.state !== 'SHOP' && this.state !== 'GACHA') return;
+                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
                 document.getElementById('stat-overlay').style.display = 'flex';
                 this.updateStatPanel();
@@ -1630,6 +1635,9 @@
 
             closeStatPanel() {
                 document.getElementById('stat-overlay').style.display = 'none';
+                if (this.previousState === 'BATTLE') {
+                    this.state = 'BATTLE';
+                }
             }
 
             updateStatPanel() {
