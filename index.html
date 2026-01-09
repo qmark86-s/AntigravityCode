@@ -954,7 +954,7 @@
         </div>
     </div>
 
-    <div id="ui-panel">
+    <div id="ui-panel" style="display:flex;flex-direction:column;gap:5px;">
         <!-- 첫 줄: LV / HP -->
         <div style="display:flex;align-items:center;gap:15px;">
             <span>👤 Lv.<span id="ui-lv">1</span></span>
@@ -1830,12 +1830,17 @@
                 listDiv.innerHTML = inventory.map((item, idx) => {
                     const grade = this.getGradeInfo(item.grade);
                     const isEquipped = this.p.equippedWeapon && this.p.equippedWeapon.id === item.id;
+                    const weaponAtk = this.getWeaponAtk(item);
+                    const isImage = item.icon && (item.icon.indexOf('http') === 0 || item.icon.indexOf('data:') === 0 || item.icon.indexOf('assets/') === 0);
+                    const iconHtml = isImage
+                        ? `<img src="${item.icon}" style="width:32px;height:32px;object-fit:contain;">`
+                        : `<span style="font-size:28px;">${item.icon || '🗡️'}</span>`;
                     return `
                         <div class="inv-item" style="background:${grade.color}22;border:2px solid ${grade.color};border-radius:8px;padding:8px;text-align:center;cursor:pointer;${isEquipped ? 'opacity:0.5;' : ''}" 
                              onclick="game.showItemActions(${idx})">
-                            <div style="font-size:28px;">${item.icon}</div>
+                            ${iconHtml}
                             <div style="font-size:10px;color:${grade.color};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
-                            <div style="font-size:9px;color:#e74c3c;">+${item.atk}</div>
+                            <div style="font-size:9px;color:#e74c3c;">+${weaponAtk}</div>
                         </div>
                     `;
                 }).join('');
