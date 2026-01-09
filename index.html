@@ -749,6 +749,20 @@
 
         <div id="log-box"></div>
 
+        <!-- 커스텀 확인 모달 -->
+        <div id="confirm-modal"
+            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;">
+            <div
+                style="background:linear-gradient(180deg,#2a2a3d,#1a1a2e);padding:30px;border-radius:15px;border:2px solid #8b5cf6;max-width:400px;text-align:center;box-shadow:0 0 30px rgba(139,92,246,0.5);">
+                <div id="modal-title" style="font-size:20px;font-weight:bold;color:#fff;margin-bottom:15px;"></div>
+                <div id="modal-message" style="color:#ccc;margin-bottom:25px;white-space:pre-line;line-height:1.6;">
+                </div>
+                <div id="modal-buttons" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <!-- 버튼들이 동적으로 생성됨 -->
+                </div>
+            </div>
+        </div>
+
         <div id="settings-overlay">
             <h1>⚙️ 설정</h1>
 
@@ -1525,7 +1539,19 @@
                 }
                 this.p.gold -= w.price;
                 this.addToInventory({ ...w });
-                this.log(`🗡️ ${w.name} 구매! (가방에 추가됨)`);
+
+                // 자동 장착: 현재 무기보다 좋으면 자동 장착
+                const currentAtk = this.p.equippedWeapon ? this.getWeaponAtk(this.p.equippedWeapon) : 0;
+                const newAtk = this.getWeaponAtk(w);
+                const newIdx = this.p.inventory.length - 1;
+
+                if (newAtk > currentAtk) {
+                    this.equipWeapon(newIdx);
+                    this.log(`✨ ${w.name} 구매 및 자동 장착! (공격력 +${newAtk})`);
+                } else {
+                    this.log(`🗡️ ${w.name} 구매! (가방에 추가됨)`);
+                }
+
                 this.updateUI();
                 this.renderWeaponShop();
                 document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
@@ -1888,20 +1914,27 @@
                 }).join('');
             }
 
-            showItemActions(idx) {
+            async showItemActions(idx) {
                 const item = this.p.inventory[idx];
                 if (!item) return;
                 const grade = this.getGradeInfo(item.grade);
                 const sellPrice = Math.floor((item.price || 100) * 0.25);
+                const weaponAtk = this.getWeaponAtk(item);
 
-                const action = confirm(`[${grade.name}] ${item.name}\n공격력: +${item.atk}\n\n장착하시겠습니까?\n(취소 = 판매 ${sellPrice}G)`);
+                const action = await this.showConfirmModal(
+                    `[${grade.name}] ${item.name}`,
+                    `공격력: +${weaponAtk}\n\n이 아이템을 어떻게 하시겠습니까?`,
+                    [
+                        { text: '🗡️ 장착', value: 'equip', style: 'background:#2ecc71' },
+                        { text: `💰 판매 (${sellPrice}G)`, value: 'sell', style: 'background:#f39c12' },
+                        { text: '취소', value: 'cancel', style: 'background:#666' }
+                    ]
+                );
 
-                if (action) {
+                if (action === 'equip') {
                     this.equipWeapon(idx);
-                } else {
-                    if (confirm(`${item.name}을(를) ${sellPrice}G에 판매하시겠습니까?`)) {
-                        this.sellItem(idx);
-                    }
+                } else if (action === 'sell') {
+                    this.sellItem(idx);
                 }
             }
 
@@ -2043,8 +2076,16 @@
             }
 
             // 진행상황 초기화 (다이아 제외)
-            resetProgress() {
-                if (!confirm('정말 캐릭터를 초기화하시겠습니까?\n다이아를 제외한 모든 진행상황이 초기화됩니다.')) return;
+            async resetProgress() {
+                const confirmed = await this.showConfirmModal(
+                    '⚠️ 캐릭터 초기화',
+                    '정말 캐릭터를 초기화하시겠습니까?\n다이아를 제외한 모든 진행상황이 초기화됩니다.',
+                    [
+                        { text: '초기화', value: true, style: 'background:#e74c3c' },
+                        { text: '취소', value: false, style: 'background:#666' }
+                    ]
+                );
+                if (!confirmed) return;
 
                 // 초기 플레이어 데이터
                 const defaultPlayer = {
@@ -2131,16 +2172,24 @@
             }
 
             // 슬롯 변경
-            switchSlot(newSlotIdx) {
+            async switchSlot(newSlotIdx) {
                 if (newSlotIdx < 0 || newSlotIdx > 2) return;
 
                 const currentSlot = this.getCurrentSlot();
                 if (currentSlot === newSlotIdx) {
-                    alert('이미 해당 슬롯을 사용 중입니다.');
+                    await this.showConfirmModal('알림', '이미 해당 슬롯을 사용 중입니다.', [{ text: '확인', value: true }]);
                     return;
                 }
 
-                if (!confirm(`슬롯 ${newSlotIdx + 1}로 변경하시겠습니까?\n현재 진행상황이 저장됩니다.`)) return;
+                const confirmed = await this.showConfirmModal(
+                    '💾 슬롯 변경',
+                    `슬롯 ${newSlotIdx + 1}로 변경하시겠습니까?\n현재 진행상황이 저장됩니다.`,
+                    [
+                        { text: '변경', value: true, style: 'background:#2ecc71' },
+                        { text: '취소', value: false, style: 'background:#666' }
+                    ]
+                );
+                if (!confirmed) return;
 
                 // 현재 슬롯에 저장
                 this.saveToSlot(currentSlot);
@@ -2153,8 +2202,16 @@
             }
 
             // 슬롯 삭제
-            deleteSlot(slotIdx) {
-                if (!confirm(`슬롯 ${slotIdx + 1}을 삭제하시겠습니까?\n해당 캐릭터의 모든 데이터가 삭제됩니다.`)) return;
+            async deleteSlot(slotIdx) {
+                const confirmed = await this.showConfirmModal(
+                    '🗑️ 슬롯 삭제',
+                    `슬롯 ${slotIdx + 1}을 삭제하시겠습니까?\n해당 캐릭터의 모든 데이터가 삭제됩니다.`,
+                    [
+                        { text: '삭제', value: true, style: 'background:#e74c3c' },
+                        { text: '취소', value: false, style: 'background:#666' }
+                    ]
+                );
+                if (!confirmed) return;
 
                 localStorage.removeItem('wm_progress_' + slotIdx);
                 this.renderSlotUI();
@@ -2199,7 +2256,39 @@
             }
 
             wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+            // 커스텀 확인 모달
+            showConfirmModal(title, message, buttons = [{ text: '확인', value: true, style: '' }, { text: '취소', value: false, style: 'background:#666' }]) {
+                return new Promise(resolve => {
+                    const modal = document.getElementById('confirm-modal');
+                    const titleEl = document.getElementById('modal-title');
+                    const messageEl = document.getElementById('modal-message');
+                    const buttonsEl = document.getElementById('modal-buttons');
+
+                    titleEl.textContent = title;
+                    messageEl.textContent = message;
+
+                    // 버튼 생성
+                    buttonsEl.innerHTML = buttons.map((btn, i) =>
+                        `<button class="btn-save" style="${btn.style || ''};padding:10px 25px;min-width:80px;" data-value="${i}">${btn.text}</button>`
+                    ).join('');
+
+                    // 클릭 핸들러
+                    const handleClick = (e) => {
+                        const idx = e.target.dataset.value;
+                        if (idx !== undefined) {
+                            modal.style.display = 'none';
+                            buttonsEl.removeEventListener('click', handleClick);
+                            resolve(buttons[parseInt(idx)].value);
+                        }
+                    };
+                    buttonsEl.addEventListener('click', handleClick);
+
+                    modal.style.display = 'flex';
+                });
+            }
         }
+
 
         // 게임 초기화 (async)
         window.game = null;
