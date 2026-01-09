@@ -1346,7 +1346,6 @@
             }
 
             openShop() {
-                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
                 document.getElementById('shop-overlay').style.display = 'flex';
                 document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
@@ -1363,10 +1362,6 @@
 
             closeShop() {
                 document.getElementById('shop-overlay').style.display = 'none';
-                // 이전 상태가 BATTLE이었다면 전투 재개
-                if (this.previousState === 'BATTLE') {
-                    this.state = 'BATTLE';
-                }
             }
 
             updateShopEquipment() {
@@ -1430,7 +1425,6 @@
 
             // 뽑기 관련 함수
             openGacha() {
-                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
                 document.getElementById('gacha-overlay').style.display = 'flex';
                 document.getElementById('gacha-diamond').innerText = NumFormat.format(this.p.diamond);
@@ -1440,9 +1434,6 @@
 
             closeGacha() {
                 document.getElementById('gacha-overlay').style.display = 'none';
-                if (this.previousState === 'BATTLE') {
-                    this.state = 'BATTLE';
-                }
             }
 
             doGacha(count) {
@@ -1641,7 +1632,6 @@
 
             // 스탯 패널
             openStatPanel() {
-                this.previousState = this.state; // 이전 상태 저장
                 this.closeAllOverlays();
                 document.getElementById('stat-overlay').style.display = 'flex';
                 this.updateStatPanel();
@@ -1649,9 +1639,6 @@
 
             closeStatPanel() {
                 document.getElementById('stat-overlay').style.display = 'none';
-                if (this.previousState === 'BATTLE') {
-                    this.state = 'BATTLE';
-                }
             }
 
             updateStatPanel() {
