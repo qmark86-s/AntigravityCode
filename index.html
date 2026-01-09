@@ -960,16 +960,16 @@
             <span>👤 Lv.<span id="ui-lv">1</span></span>
             <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
         </div>
-        <!-- 두 번째 줄: EXP 바 (레퍼런스 스타일) -->
-        <div style="display:flex;align-items:center;gap:10px;margin:5px 0;">
-            <span style="font-size:12px;color:#fff;font-weight:bold;">EXP</span>
-            <div style="flex:1;height:16px;background:#000;border:2px solid #fff;border-radius:3px;overflow:hidden;">
+        <!-- 두 번째 줄: EXP 바 (레퍼런스 스타일 - 밝은 배경) -->
+        <div
+            style="background:#f0f0f0;padding:8px 15px;border-radius:5px;margin:8px 0;display:flex;align-items:center;gap:15px;">
+            <span style="font-size:14px;color:#333;font-weight:bold;">EXP</span>
+            <div style="flex:1;height:12px;background:#ccc;border-radius:6px;overflow:hidden;">
                 <div id="exp-bar-fill"
                     style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
                 </div>
             </div>
-            <span style="font-size:12px;color:#888;min-width:60px;"><span id="ui-exp">0</span> / <span
-                    id="ui-maxexp">100</span></span>
+            <span style="font-size:14px;color:#333;"><span id="ui-exp">0</span> / <span id="ui-maxexp">100</span></span>
         </div>
         <!-- 중앙: 골드/다이아 + 버튼들 -->
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
@@ -1669,7 +1669,8 @@
                 const expPercent = (this.p.exp / this.p.maxExp) * 100;
                 document.getElementById('exp-bar-fill').style.width = Math.min(100, expPercent) + '%';
 
-                const w = this.r.weapons[this.p.wIdx];
+                // 장착 무기 표시 (equippedWeapon 우선, 없으면 wIdx 폴백)
+                const w = this.p.equippedWeapon || this.r.weapons[this.p.wIdx] || this.r.weapons[0];
                 const weaponAtk = this.getWeaponAtk(w);
                 const totalAtk = this.p.atk + weaponAtk;
                 document.getElementById('stat-atk').innerText = NumFormat.format(totalAtk);
