@@ -1160,7 +1160,7 @@
             }
         };
 
-        const settings = {
+        window.settings = {
             data: null,
             async init() {
                 // JSON에서 로드
@@ -2202,10 +2202,10 @@
         }
 
         // 게임 초기화 (async)
-        let game = null;
+        window.game = null;
         (async () => {
             await settings.init();
-            game = new Game();
+            window.game = new Game();
             console.log('🎮 Game initialized with JSON data');
         })();
     </script>
