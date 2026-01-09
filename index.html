@@ -2046,17 +2046,29 @@
             resetProgress() {
                 if (!confirm('정말 캐릭터를 초기화하시겠습니까?\n다이아를 제외한 모든 진행상황이 초기화됩니다.')) return;
 
-                // 현재 다이아 저장 (공유 다이아에 추가)
-                const currentDiamond = this.p.diamond;
-                let sharedDiamond = parseInt(localStorage.getItem('wm_shared_diamond') || '0');
-                sharedDiamond += currentDiamond;
-                localStorage.setItem('wm_shared_diamond', sharedDiamond.toString());
+                // 초기 플레이어 데이터
+                const defaultPlayer = {
+                    hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
+                    atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
+                    gold: 0, diamond: 0, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
+                    invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
+                    inventory: [],
+                    equippedWeapon: null
+                };
 
-                // 슬롯 데이터 삭제 (현재 슬롯만)
-                const currentSlot = localStorage.getItem('wm_current_slot') || '0';
-                localStorage.removeItem('wm_progress_' + currentSlot);
-                localStorage.removeItem('wm_progress'); // 호환성
+                // 현재 슬롯에 초기 데이터 저장
+                const currentSlot = this.getCurrentSlot();
+                const saveData = {
+                    p: defaultPlayer,
+                    stage: 1,
+                    autoSave: true,
+                    showDamageText: true,
+                    savedAt: new Date().toISOString()
+                };
+                localStorage.setItem('wm_progress_' + currentSlot, JSON.stringify(saveData));
+                localStorage.setItem('wm_progress', JSON.stringify(saveData)); // 호환성
 
+                alert('캐릭터가 초기화되었습니다!');
                 location.reload();
             }
 
