@@ -899,6 +899,42 @@
             </div>
         </div>
 
+        <!-- 인벤토리 오버레이 -->
+        <div id="inventory-overlay"
+            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:500;justify-content:center;align-items:center;">
+            <div class="shop-window" style="width:500px;max-height:80vh;overflow:auto;">
+                <h2 style="color:#8b5cf6">🎒 가방</h2>
+
+                <!-- 현재 장착 장비 -->
+                <div
+                    style="background:rgba(139,92,246,0.2);padding:15px;border-radius:10px;margin-bottom:15px;border:2px solid #8b5cf6;">
+                    <div style="font-size:14px;color:#888;margin-bottom:8px;">현재 장착</div>
+                    <div id="inv-equipped" style="display:flex;align-items:center;gap:10px;min-height:50px;">
+                        <!-- 장착 무기 표시 -->
+                    </div>
+                </div>
+
+                <!-- 인벤토리 목록 -->
+                <div style="margin-bottom:15px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="color:#888;">보유 장비 (<span id="inv-count">0</span>개)</span>
+                        <select id="inv-sort" onchange="game.sortInventory(this.value)"
+                            style="padding:5px;border-radius:5px;background:#333;color:#fff;border:none;">
+                            <option value="grade">등급순</option>
+                            <option value="atk">공격력순</option>
+                            <option value="name">이름순</option>
+                        </select>
+                    </div>
+                    <div id="inv-list"
+                        style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:300px;overflow-y:auto;">
+                        <!-- 인벤토리 아이템들 -->
+                    </div>
+                </div>
+
+                <button class="btn-small" style="width:100%" onclick="game.closeInventory()">닫기</button>
+            </div>
+        </div>
+
         <div id="enemy-container">
             <div id="enemy-hud">STAGE <span id="hud-stage">1</span> <span id="hud-name">적</span></div>
             <div id="enemy-content">
@@ -919,28 +955,37 @@
     </div>
 
     <div id="ui-panel">
-        <div>👤 Lv.<span id="ui-lv">1</span> <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span
-                    id="ui-maxhp">100</span></span></div>
-        <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
-            <div style="flex:1;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+        <!-- 첫 줄: LV / HP -->
+        <div style="display:flex;align-items:center;gap:15px;">
+            <span>👤 Lv.<span id="ui-lv">1</span></span>
+            <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
+        </div>
+        <!-- 두 번째 줄: EXP 바 (레퍼런스 스타일) -->
+        <div style="display:flex;align-items:center;gap:10px;margin:5px 0;">
+            <span style="font-size:12px;color:#fff;font-weight:bold;">EXP</span>
+            <div style="flex:1;height:16px;background:#000;border:2px solid #fff;border-radius:3px;overflow:hidden;">
                 <div id="exp-bar-fill"
-                    style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#9b59b6);transition:width 0.3s;">
+                    style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
                 </div>
             </div>
-            <span style="font-size:10px;color:#888;">EXP <span id="ui-exp">0</span>/<span
+            <span style="font-size:12px;color:#888;min-width:60px;"><span id="ui-exp">0</span> / <span
                     id="ui-maxexp">100</span></span>
         </div>
-        <div style="text-align:center">
-            <div style="display:flex;justify-content:center;gap:15px;">
+        <!-- 중앙: 골드/다이아 + 버튼들 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;gap:15px;">
                 <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
                 <span style="color:#00bcd4;font-weight:bold">💎 <span id="ui-diamond">0</span></span>
             </div>
-            <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
-            <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
-            <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
-            <button class="btn-small" onclick="settings.open()">⚙️ 설정</button>
+            <div style="display:flex;gap:5px;">
+                <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
+                <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
+                <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
+                <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
+                <button class="btn-small" onclick="settings.open()">⚙️ 설정</button>
+            </div>
+            <div>🗡️ <span id="ui-weapon">맨주먹</span></div>
         </div>
-        <div style="text-align:right">🗡️ <span id="ui-weapon">맨주먹</span></div>
     </div>
 
     <div id="stat-panel">
@@ -1153,7 +1198,9 @@
                     hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
                     atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
                     gold: 0, diamond: 1000, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
-                    invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 }
+                    invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
+                    inventory: [], // 인벤토리 (무기 객체 배열)
+                    equippedWeapon: null // 장착된 무기 객체
                 };
                 this.stage = 1;
                 this.state = 'IDLE';
@@ -1496,15 +1543,25 @@
                     }
                 }
 
-                // 가장 좋은 무기 장착
-                const best = results.reduce((a, b) => {
-                    const gradeOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-                    return gradeOrder.indexOf(a.grade) > gradeOrder.indexOf(b.grade) ? a : b;
+                // 결과를 인벤토리에 추가
+                results.forEach(r => {
+                    this.addToInventory({ ...r.weapon, grade: r.grade });
                 });
 
-                const bestIdx = this.r.weapons.findIndex(w => w.id === best.weapon.id || w.name === best.weapon.name);
-                if (bestIdx > this.p.wIdx) {
-                    this.p.wIdx = bestIdx;
+                // 가장 좋은 무기 자동 장착 (현재 장착보다 좋으면)
+                const gradeOrder = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+                const best = results.reduce((a, b) =>
+                    gradeOrder[a.grade] > gradeOrder[b.grade] ? a : b
+                );
+
+                const currentAtk = this.p.equippedWeapon ? this.p.equippedWeapon.atk : 0;
+                if (best.weapon.atk > currentAtk) {
+                    // 인벤토리에서 방금 추가된 최고 무기 찾아서 장착
+                    const bestIdx = this.p.inventory.findIndex(w => w.name === best.weapon.name && w.grade === best.grade);
+                    if (bestIdx >= 0) {
+                        this.equipWeapon(bestIdx);
+                        this.log(`✨ ${best.weapon.name} 자동 장착! (공격력 +${best.weapon.atk})`);
+                    }
                 }
 
                 // 결과 표시
@@ -1723,6 +1780,153 @@
                 this.p.aspd = this.p.aspdRaw;
                 this.p.critRate = this.p.critRateRaw;
                 this.p.critDmg = this.p.critDmgRaw;
+            }
+
+            // ===== 인벤토리 시스템 =====
+            openInventory() {
+                document.getElementById('inventory-overlay').style.display = 'flex';
+                this.renderInventory();
+            }
+
+            closeInventory() {
+                document.getElementById('inventory-overlay').style.display = 'none';
+            }
+
+            renderInventory() {
+                // 현재 장착 무기 표시
+                const eqDiv = document.getElementById('inv-equipped');
+                if (this.p.equippedWeapon) {
+                    const w = this.p.equippedWeapon;
+                    const grade = this.getGradeInfo(w.grade);
+                    eqDiv.innerHTML = `
+                        <span style="font-size:40px;">${w.icon}</span>
+                        <div>
+                            <div style="font-weight:bold;color:${grade.color}">${w.name}</div>
+                            <div style="color:#e74c3c;font-size:12px;">공격력 +${w.atk}</div>
+                            <div style="color:#888;font-size:10px;">${grade.name}</div>
+                        </div>
+                        <button class="btn-small" style="margin-left:auto;" onclick="game.unequipWeapon()">해제</button>
+                    `;
+                } else {
+                    eqDiv.innerHTML = '<span style="color:#888;">장착된 장비 없음 (맨주먹)</span>';
+                }
+
+                // 인벤토리 목록 표시
+                const listDiv = document.getElementById('inv-list');
+                const inventory = this.p.inventory || [];
+                document.getElementById('inv-count').textContent = inventory.length;
+
+                if (inventory.length === 0) {
+                    listDiv.innerHTML = '<div style="grid-column:span 4;text-align:center;color:#666;padding:20px;">인벤토리가 비어있습니다</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = inventory.map((item, idx) => {
+                    const grade = this.getGradeInfo(item.grade);
+                    const isEquipped = this.p.equippedWeapon && this.p.equippedWeapon.id === item.id;
+                    return `
+                        <div class="inv-item" style="background:${grade.color}22;border:2px solid ${grade.color};border-radius:8px;padding:8px;text-align:center;cursor:pointer;${isEquipped ? 'opacity:0.5;' : ''}" 
+                             onclick="game.showItemActions(${idx})">
+                            <div style="font-size:28px;">${item.icon}</div>
+                            <div style="font-size:10px;color:${grade.color};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
+                            <div style="font-size:9px;color:#e74c3c;">+${item.atk}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            showItemActions(idx) {
+                const item = this.p.inventory[idx];
+                if (!item) return;
+                const grade = this.getGradeInfo(item.grade);
+                const sellPrice = Math.floor((item.price || 100) * 0.25);
+
+                const action = confirm(`[${grade.name}] ${item.name}\n공격력: +${item.atk}\n\n장착하시겠습니까?\n(취소 = 판매 ${sellPrice}G)`);
+
+                if (action) {
+                    this.equipWeapon(idx);
+                } else {
+                    if (confirm(`${item.name}을(를) ${sellPrice}G에 판매하시겠습니까?`)) {
+                        this.sellItem(idx);
+                    }
+                }
+            }
+
+            equipWeapon(idx) {
+                const item = this.p.inventory[idx];
+                if (!item) return;
+
+                // 기존 장착 무기가 있으면 인벤토리로
+                if (this.p.equippedWeapon) {
+                    this.p.inventory.push(this.p.equippedWeapon);
+                }
+
+                // 새 무기 장착
+                this.p.equippedWeapon = item;
+                this.p.inventory.splice(idx, 1);
+
+                // wIdx 업데이트 (기존 시스템 호환)
+                const wepIdx = this.r.weapons.findIndex(w => w.name === item.name);
+                if (wepIdx >= 0) this.p.wIdx = wepIdx;
+
+                this.updateWeaponDisplay();
+                this.renderInventory();
+                this.updateUI();
+                this.saveProgress();
+                this.log(`🗡️ ${item.name} 장착!`);
+            }
+
+            unequipWeapon() {
+                if (!this.p.equippedWeapon) return;
+                this.p.inventory.push(this.p.equippedWeapon);
+                this.p.equippedWeapon = null;
+                this.p.wIdx = 0; // 맨주먹
+                this.updateWeaponDisplay();
+                this.renderInventory();
+                this.updateUI();
+                this.saveProgress();
+                this.log('👊 무기 해제, 맨주먹으로 전투');
+            }
+
+            sellItem(idx) {
+                const item = this.p.inventory[idx];
+                if (!item) return;
+                const sellPrice = Math.floor((item.price || 100) * 0.25);
+                this.p.gold += sellPrice;
+                this.p.inventory.splice(idx, 1);
+                this.renderInventory();
+                this.updateUI();
+                this.saveProgress();
+                this.log(`💰 ${item.name} 판매! +${sellPrice}G`);
+            }
+
+            sortInventory(sortType) {
+                const gradeOrder = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 };
+
+                switch (sortType) {
+                    case 'grade':
+                        this.p.inventory.sort((a, b) => (gradeOrder[a.grade] || 5) - (gradeOrder[b.grade] || 5));
+                        break;
+                    case 'atk':
+                        this.p.inventory.sort((a, b) => b.atk - a.atk);
+                        break;
+                    case 'name':
+                        this.p.inventory.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                }
+                this.renderInventory();
+            }
+
+            // 무기 획득 시 인벤토리에 추가
+            addToInventory(weapon) {
+                // 고유 ID 부여
+                const newWeapon = {
+                    ...weapon,
+                    id: Date.now() + Math.random(),
+                    price: weapon.price || (weapon.atk * 10)
+                };
+                this.p.inventory.push(newWeapon);
+                this.saveProgress();
             }
 
             // 진행상황 저장
