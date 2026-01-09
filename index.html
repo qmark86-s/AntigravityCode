@@ -804,11 +804,11 @@
 
                 <!-- 탭 버튼 -->
                 <div style="display:flex;gap:5px;margin-bottom:10px;">
-                    <button class="btn-small shop-tab active" onclick="game.switchShopTab('items')">🧪 소모품</button>
+                    <button class="btn-small shop-tab active" onclick="game.switchShopTab('items')">💪 능력치</button>
                     <button class="btn-small shop-tab" onclick="game.switchShopTab('weapons')">🗡️ 무기</button>
                 </div>
 
-                <!-- 소모품 탭 -->
+                <!-- 능력치 탭 -->
                 <div id="shop-items-tab">
                     <div class="shop-item" onclick="game.buy('potion')"><span>💖 회복</span><span>50G</span></div>
                     <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span>100G</span></div>
@@ -917,7 +917,7 @@
                 <!-- 인벤토리 목록 -->
                 <div style="margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <span style="color:#888;">보유 장비 (<span id="inv-count">0</span>개)</span>
+                        <span style="color:#888;">보유 장비 (<span id="inv-count">0</span>/90)</span>
                         <select id="inv-sort" onchange="game.sortInventory(this.value)"
                             style="padding:5px;border-radius:5px;background:#333;color:#fff;border:none;">
                             <option value="grade">등급순</option>
@@ -926,7 +926,7 @@
                         </select>
                     </div>
                     <div id="inv-list"
-                        style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:300px;overflow-y:auto;">
+                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:400px;overflow-y:auto;">
                         <!-- 인벤토리 아이템들 -->
                     </div>
                 </div>
@@ -1422,6 +1422,7 @@
                 document.getElementById('gacha-overlay').style.display = 'none';
                 document.getElementById('stat-overlay').style.display = 'none';
                 document.getElementById('settings-overlay').style.display = 'none';
+                document.getElementById('inventory-overlay').style.display = 'none';
             }
 
             openShop() {
@@ -1464,17 +1465,16 @@
                 container.innerHTML = '';
                 this.r.weapons.forEach((w, i) => {
                     if (i === 0) return; // 맨주먹 제외
-                    const owned = this.p.wIdx === i;
-                    const canBuy = this.p.gold >= w.price && !owned && w.price > 0;
+                    if (w.price === 0) return; // 뽑기 전용 제외
+                    const canBuy = this.p.gold >= w.price;
                     const isImage = w.icon && (w.icon.indexOf('http') === 0 || w.icon.indexOf('data:') === 0 || w.icon.indexOf('assets/') === 0);
                     const iconHtml = isImage ? `<img src="${w.icon}" style="width:24px;height:24px;vertical-align:middle;">` : (w.icon || '🗡️');
                     const gradeInfo = this.getGradeInfo(w.grade);
                     const weaponAtk = this.getWeaponAtk(w);
-                    const priceText = w.price === 0 ? '뽑기 전용' : w.price + 'G';
                     container.innerHTML += `
-                        <div class="shop-item ${owned ? 'owned' : ''}" style="border-left:3px solid ${gradeInfo.color};${owned ? 'border:2px solid #27ae60;' : ''}" onclick="${canBuy ? `game.buyWeapon(${i})` : ''}">
+                        <div class="shop-item" style="border-left:3px solid ${gradeInfo.color};display:flex;justify-content:space-between;align-items:center;">
                             <span style="color:${gradeInfo.color}">${iconHtml} [${gradeInfo.name}] ${w.name} (+${weaponAtk})</span>
-                            <span style="color:${owned ? '#27ae60' : (w.price === 0 ? '#ff9800' : '#f1c40f')}">${owned ? '장착중' : priceText}</span>
+                            <button class="btn-small" style="padding:5px 10px;${canBuy ? '' : 'opacity:0.5;cursor:not-allowed;'}" onclick="game.buyWeapon(${i})">${w.price}G 구매</button>
                         </div>
                     `;
                 });
@@ -1490,16 +1490,20 @@
 
             buyWeapon(idx) {
                 const w = this.r.weapons[idx];
-                if (this.p.gold >= w.price) {
-                    this.p.gold -= w.price;
-                    this.p.wIdx = idx;
-                    this.log(`🗡️ ${w.name} 구매!`);
-                    this.updateUI();
-                    this.updateHand();
-                    this.updateShopEquipment();
-                    this.renderWeaponShop();
-                    document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
+                if (this.p.gold < w.price) {
+                    this.log('💰 골드가 부족합니다!');
+                    return;
                 }
+                if (this.p.inventory.length >= 90) {
+                    this.log('⚠️ 가방이 꽉 차서 구매할 수 없습니다.');
+                    return;
+                }
+                this.p.gold -= w.price;
+                this.addToInventory({ ...w });
+                this.log(`🗡️ ${w.name} 구매! (가방에 추가됨)`);
+                this.updateUI();
+                this.renderWeaponShop();
+                document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
             }
 
             // 뽑기 관련 함수
@@ -1784,6 +1788,7 @@
 
             // ===== 인벤토리 시스템 =====
             openInventory() {
+                this.closeAllOverlays();
                 document.getElementById('inventory-overlay').style.display = 'flex';
                 this.renderInventory();
             }
@@ -1919,6 +1924,12 @@
 
             // 무기 획득 시 인벤토리에 추가
             addToInventory(weapon) {
+                // 90칸 제한 체크
+                const MAX_SLOTS = 90;
+                if (this.p.inventory.length >= MAX_SLOTS) {
+                    this.log('⚠️ 가방이 꽉 차서 전리품을 자동으로 획득할 수 없습니다.');
+                    return false;
+                }
                 // 고유 ID 부여
                 const newWeapon = {
                     ...weapon,
@@ -1927,6 +1938,7 @@
                 };
                 this.p.inventory.push(newWeapon);
                 this.saveProgress();
+                return true;
             }
 
             // 진행상황 저장
