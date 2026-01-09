@@ -1825,8 +1825,17 @@
                 this.updateUI();
             }
 
-            resetStats() {
-                if (!confirm('정말 스탯을 초기화하시겠습니까?')) return;
+            async resetStats() {
+                const confirmed = await this.showConfirmModal(
+                    '🔄 스탯 초기화',
+                    '정말 스탯을 초기화하시겠습니까?\n투자한 스탯 포인트가 모두 반환됩니다.',
+                    [
+                        { text: '초기화', value: true, style: 'background:#e74c3c' },
+                        { text: '취소', value: false, style: 'background:#666' }
+                    ]
+                );
+                if (!confirmed) return;
+
                 const totalInvested = Object.values(this.p.invested).reduce((a, b) => a + b, 0);
                 this.p.statPoints += totalInvested;
                 this.p.atk = this.baseStats.atk;
@@ -1838,6 +1847,7 @@
                 this.p.invested = { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 };
                 this.updateStatPanel();
                 this.updateUI();
+                this.saveProgress();
                 this.log('🔄 스탯이 초기화되었습니다!');
             }
 
@@ -1861,9 +1871,12 @@
             }
 
             renderInventory() {
+                console.log('=== renderInventory CALLED ===');
                 // 현재 장착 무기 표시 (equippedWeapon 우선, 없으면 wIdx 폴백)
                 const eqDiv = document.getElementById('inv-equipped');
+                console.log('eqDiv found:', !!eqDiv);
                 const w = this.p.equippedWeapon || this.r.weapons[this.p.wIdx] || this.r.weapons[0];
+                console.log('Weapon w:', w?.name, 'equippedWeapon:', this.p.equippedWeapon?.name, 'wIdx:', this.p.wIdx);
 
                 if (w && w.name !== '맨주먹') {
                     const grade = this.getGradeInfo(w.grade);
@@ -1872,7 +1885,7 @@
                     const iconHtml = isImage
                         ? `<img src="${w.icon}" style="width:40px;height:40px;object-fit:contain;">`
                         : `<span style="font-size:40px;">${w.icon || '🗡️'}</span>`;
-                    eqDiv.innerHTML = `
+                    const newHtml = `
                         ${iconHtml}
                         <div>
                             <div style="font-weight:bold;color:${grade.color}">${w.name}</div>
@@ -1881,6 +1894,9 @@
                         </div>
                         <button class="btn-small" style="margin-left:auto;" onclick="game.unequipWeapon()">해제</button>
                     `;
+                    console.log('Setting eqDiv.innerHTML with weapon:', w.name);
+                    eqDiv.innerHTML = newHtml;
+                    console.log('eqDiv.innerHTML NOW:', eqDiv.textContent?.substring(0, 30));
                 } else {
                     eqDiv.innerHTML = '<span style="color:#888;">장착된 장비 없음 (맨주먹)</span>';
                 }
@@ -1915,8 +1931,10 @@
             }
 
             async showItemActions(idx) {
+                // 아이템 ID를 저장해서 인덱스 변경에 대응
                 const item = this.p.inventory[idx];
                 if (!item) return;
+                const itemId = item.id;
                 const grade = this.getGradeInfo(item.grade);
                 const sellPrice = Math.floor((item.price || 100) * 0.25);
                 const weaponAtk = this.getWeaponAtk(item);
@@ -1931,11 +1949,35 @@
                     ]
                 );
 
-                if (action === 'equip') {
-                    this.equipWeapon(idx);
-                } else if (action === 'sell') {
-                    this.sellItem(idx);
+                console.log('=== showItemActions: Modal returned ===');
+                console.log('action:', action);
+
+                // 모달 닫힌 후 현재 인덱스 다시 찾기 (ID 기준)
+                const currentIdx = this.p.inventory.findIndex(i => i.id === itemId);
+                console.log('currentIdx:', currentIdx, 'itemId:', itemId);
+                if (currentIdx === -1) {
+                    console.log('Item not found, returning early');
+                    return; // 이미 제거된 아이템
                 }
+
+                if (action === 'equip') {
+                    console.log('=== EQUIP BRANCH ENTERED ===');
+                    this.equipWeapon(currentIdx);
+                    console.log('equipWeapon completed');
+                } else if (action === 'sell') {
+                    console.log('=== SELL BRANCH ENTERED ===');
+                    this.sellItem(currentIdx);
+                } else {
+                    console.log('=== NO BRANCH MATCHED ===');
+                    return;
+                }
+
+                // Use await to ensure async context settles
+                console.log('=== AWAITING DELAY ===');
+                await new Promise(r => setTimeout(r, 100));
+                console.log('=== POST-DELAY RENDER ===');
+                this.renderInventory();
+                console.log('=== DONE ===');
             }
 
             equipWeapon(idx) {
@@ -1956,7 +1998,8 @@
                 if (wepIdx >= 0) this.p.wIdx = wepIdx;
 
                 this.updateWeaponDisplay();
-                this.renderInventory();
+                // Commented out: renderInventory is called by showItemActions
+                // this.renderInventory();
                 this.updateUI();
                 this.saveProgress();
                 this.log(`🗡️ ${item.name} 장착!`);
