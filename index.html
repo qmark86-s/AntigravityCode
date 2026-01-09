@@ -752,6 +752,15 @@
         <div id="settings-overlay">
             <h1>⚙️ 설정</h1>
 
+            <!-- 캐릭터 슬롯 섹션 -->
+            <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
+                <h2>💾 캐릭터 슬롯</h2>
+                <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
+                <div id="slot-container">
+                    <!-- 슬롯 UI가 여기에 렌더링됨 -->
+                </div>
+            </div>
+
             <!-- 게임 설정 섹션 -->
             <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
                 <h2>🎮 게임 설정</h2>
@@ -767,7 +776,7 @@
                         💥 데미지 텍스트 표시
                     </label>
                 </div>
-                <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️ 게임
+                <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️ 캐릭터
                     초기화</button>
             </div>
 
@@ -954,37 +963,52 @@
         </div>
     </div>
 
-    <div id="ui-panel" style="display:flex;flex-direction:column;gap:5px;">
-        <!-- 첫 줄: LV / HP -->
-        <div style="display:flex;align-items:center;gap:15px;">
-            <span>👤 Lv.<span id="ui-lv">1</span></span>
-            <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
-        </div>
-        <!-- 두 번째 줄: EXP 바 (레퍼런스 스타일 - 밝은 배경) -->
-        <div
-            style="background:#f0f0f0;padding:8px 15px;border-radius:5px;margin:8px 0;display:flex;align-items:center;gap:15px;">
-            <span style="font-size:14px;color:#333;font-weight:bold;">EXP</span>
-            <div style="flex:1;height:12px;background:#ccc;border-radius:6px;overflow:hidden;">
-                <div id="exp-bar-fill"
-                    style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
-                </div>
+    <div id="ui-panel"
+        style="display:flex;justify-content:space-between;align-items:center;gap:20px;padding:10px 15px;">
+        <!-- 1. 왼쪽 그룹: 캐릭터 정보 (LV/HP + EXP 바) -->
+        <div style="display:flex;flex-direction:column;gap:5px;min-width:200px;">
+            <!-- 상단: LV / HP -->
+            <div style="display:flex;align-items:center;gap:15px;">
+                <span>👤 Lv.<span id="ui-lv">1</span></span>
+                <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
             </div>
-            <span style="font-size:14px;color:#333;"><span id="ui-exp">0</span> / <span id="ui-maxexp">100</span></span>
+            <!-- 하단: EXP 바 -->
+            <div
+                style="background:#f0f0f0;padding:6px 10px;border-radius:5px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12px;color:#333;font-weight:bold;">EXP</span>
+                <div style="flex:1;height:10px;background:#ccc;border-radius:5px;overflow:hidden;min-width:100px;">
+                    <div id="exp-bar-fill"
+                        style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
+                    </div>
+                </div>
+                <span style="font-size:11px;color:#333;"><span id="ui-exp">0</span>/<span
+                        id="ui-maxexp">100</span></span>
+            </div>
         </div>
-        <!-- 중앙: 골드/다이아 + 버튼들 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+
+        <!-- 2. 중앙 그룹: 장비 및 재화 -->
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
+            <!-- 상단: 현재 장착 무기 -->
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span id="ui-weapon-icon" style="font-size:20px;">🗡️</span>
+                <span id="ui-weapon" style="font-weight:bold;">맨주먹</span>
+            </div>
+            <!-- 하단: 골드/다이아 -->
             <div style="display:flex;gap:15px;">
                 <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
                 <span style="color:#00bcd4;font-weight:bold">💎 <span id="ui-diamond">0</span></span>
             </div>
-            <div style="display:flex;gap:5px;">
-                <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
-                <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
-                <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
-                <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
-                <button class="btn-small" onclick="settings.open()">⚙️ 설정</button>
-            </div>
-            <div>🗡️ <span id="ui-weapon">맨주먹</span></div>
+        </div>
+
+        <!-- 3. 오른쪽 그룹: 메뉴 버튼 그리드 (2줄) -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;">
+            <!-- 윗줄: 상점, 뽑기 -->
+            <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
+            <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
+            <!-- 아랫줄: 가방, 스탯, 설정 -->
+            <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
+            <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
+            <button class="btn-small" onclick="settings.open()" style="grid-column:span 2;">⚙️ 설정</button>
         </div>
     </div>
 
@@ -1151,6 +1175,7 @@
                 if (game) {
                     document.getElementById('opt-autosave').checked = game.autoSave;
                     document.getElementById('opt-dmgtext').checked = game.showDamageText;
+                    game.renderSlotUI(); // 슬롯 UI 렌더링
                 }
             },
             close() { document.getElementById('settings-overlay').style.display = 'none'; },
@@ -1685,6 +1710,17 @@
                 weaponEl.innerText = w.name;
                 weaponEl.style.color = gradeInfo.color;
 
+                // 무기 아이콘 업데이트
+                const iconEl = document.getElementById('ui-weapon-icon');
+                if (iconEl) {
+                    const isImage = w.icon && (w.icon.indexOf('http') === 0 || w.icon.indexOf('data:') === 0 || w.icon.indexOf('assets/') === 0);
+                    if (isImage) {
+                        iconEl.innerHTML = `<img src="${w.icon}" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;">`;
+                    } else {
+                        iconEl.innerHTML = w.icon || '🗡️';
+                    }
+                }
+
                 this.updateHand();
             }
 
@@ -1953,22 +1989,36 @@
                 return true;
             }
 
-            // 진행상황 저장
+            // 진행상황 저장 (슬롯 시스템 연동)
             saveProgress() {
                 if (!this.autoSave) return;
+
+                // 공유 다이아 업데이트
+                this.setSharedDiamond(this.p.diamond);
+
+                const currentSlot = this.getCurrentSlot();
                 const saveData = {
-                    p: this.p,
+                    p: { ...this.p, diamond: 0 }, // 슬롯 데이터에는 다이아 0 (공유)
                     stage: this.stage,
                     autoSave: this.autoSave,
-                    showDamageText: this.showDamageText
+                    showDamageText: this.showDamageText,
+                    savedAt: new Date().toISOString()
                 };
-                localStorage.setItem('wm_progress', JSON.stringify(saveData));
-                console.log('💾 진행상황 저장됨');
+                localStorage.setItem('wm_progress_' + currentSlot, JSON.stringify(saveData));
+                localStorage.setItem('wm_progress', JSON.stringify(saveData)); // 호환성
+                console.log('💾 진행상황 저장됨 (슬롯 ' + (currentSlot + 1) + ')');
             }
 
-            // 진행상황 불러오기
+            // 진행상황 불러오기 (슬롯 시스템 연동)
             loadProgress() {
-                const saved = localStorage.getItem('wm_progress');
+                const currentSlot = this.getCurrentSlot();
+
+                // 슬롯 데이터 또는 기존 데이터 불러오기
+                let saved = localStorage.getItem('wm_progress_' + currentSlot);
+                if (!saved) {
+                    saved = localStorage.getItem('wm_progress'); // 호환성
+                }
+
                 if (saved) {
                     try {
                         const data = JSON.parse(saved);
@@ -1976,18 +2026,164 @@
                         this.stage = data.stage || 1;
                         this.autoSave = data.autoSave !== undefined ? data.autoSave : true;
                         this.showDamageText = data.showDamageText !== undefined ? data.showDamageText : true;
-                        console.log('📂 진행상황 불러옴 (Lv.' + this.p.lv + ', Stage ' + this.stage + ')');
+                        console.log('📂 진행상황 불러옴 (슬롯 ' + (currentSlot + 1) + ', Lv.' + this.p.lv + ', Stage ' + this.stage + ')');
                     } catch (e) {
                         console.warn('⚠️ 저장 데이터 로드 실패', e);
                     }
                 }
+
+                // 공유 다이아 적용
+                this.p.diamond = this.getSharedDiamond();
+
+                // 신규 유저는 기본 다이아 1000 지급
+                if (this.p.diamond === 0 && !saved) {
+                    this.p.diamond = 1000;
+                    this.setSharedDiamond(1000);
+                }
             }
 
-            // 진행상황 초기화
+            // 진행상황 초기화 (다이아 제외)
             resetProgress() {
-                if (!confirm('정말 게임을 초기화하시겠습니까? 모든 진행상황이 삭제됩니다.')) return;
-                localStorage.removeItem('wm_progress');
+                if (!confirm('정말 캐릭터를 초기화하시겠습니까?\n다이아를 제외한 모든 진행상황이 초기화됩니다.')) return;
+
+                // 현재 다이아 저장 (공유 다이아에 추가)
+                const currentDiamond = this.p.diamond;
+                let sharedDiamond = parseInt(localStorage.getItem('wm_shared_diamond') || '0');
+                sharedDiamond += currentDiamond;
+                localStorage.setItem('wm_shared_diamond', sharedDiamond.toString());
+
+                // 슬롯 데이터 삭제 (현재 슬롯만)
+                const currentSlot = localStorage.getItem('wm_current_slot') || '0';
+                localStorage.removeItem('wm_progress_' + currentSlot);
+                localStorage.removeItem('wm_progress'); // 호환성
+
                 location.reload();
+            }
+
+            // === 저장 슬롯 시스템 ===
+
+            // 공유 다이아 가져오기
+            getSharedDiamond() {
+                return parseInt(localStorage.getItem('wm_shared_diamond') || '0');
+            }
+
+            // 공유 다이아 설정
+            setSharedDiamond(amount) {
+                localStorage.setItem('wm_shared_diamond', Math.max(0, amount).toString());
+            }
+
+            // 현재 슬롯 번호 가져오기 (0, 1, 2)
+            getCurrentSlot() {
+                return parseInt(localStorage.getItem('wm_current_slot') || '0');
+            }
+
+            // 슬롯 데이터 가져오기
+            getSlotData(slotIdx) {
+                const saved = localStorage.getItem('wm_progress_' + slotIdx);
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+
+            // 현재 진행상황을 슬롯에 저장
+            saveToSlot(slotIdx) {
+                // 다이아는 공유이므로 현재 다이아를 공유 풀에 저장
+                this.setSharedDiamond(this.p.diamond);
+
+                const saveData = {
+                    p: { ...this.p, diamond: 0 }, // 슬롯 데이터에는 다이아 0
+                    stage: this.stage,
+                    autoSave: this.autoSave,
+                    showDamageText: this.showDamageText,
+                    savedAt: new Date().toISOString()
+                };
+                localStorage.setItem('wm_progress_' + slotIdx, JSON.stringify(saveData));
+            }
+
+            // 슬롯에서 진행상황 불러오기
+            loadFromSlot(slotIdx) {
+                const data = this.getSlotData(slotIdx);
+                if (data) {
+                    this.p = { ...this.p, ...data.p };
+                    this.stage = data.stage || 1;
+                    this.autoSave = data.autoSave !== undefined ? data.autoSave : true;
+                    this.showDamageText = data.showDamageText !== undefined ? data.showDamageText : true;
+                }
+                // 공유 다이아 적용
+                this.p.diamond = this.getSharedDiamond();
+            }
+
+            // 슬롯 변경
+            switchSlot(newSlotIdx) {
+                if (newSlotIdx < 0 || newSlotIdx > 2) return;
+
+                const currentSlot = this.getCurrentSlot();
+                if (currentSlot === newSlotIdx) {
+                    alert('이미 해당 슬롯을 사용 중입니다.');
+                    return;
+                }
+
+                if (!confirm(`슬롯 ${newSlotIdx + 1}로 변경하시겠습니까?\n현재 진행상황이 저장됩니다.`)) return;
+
+                // 현재 슬롯에 저장
+                this.saveToSlot(currentSlot);
+
+                // 새 슬롯으로 변경
+                localStorage.setItem('wm_current_slot', newSlotIdx.toString());
+
+                // 페이지 새로고침
+                location.reload();
+            }
+
+            // 슬롯 삭제
+            deleteSlot(slotIdx) {
+                if (!confirm(`슬롯 ${slotIdx + 1}을 삭제하시겠습니까?\n해당 캐릭터의 모든 데이터가 삭제됩니다.`)) return;
+
+                localStorage.removeItem('wm_progress_' + slotIdx);
+                this.renderSlotUI();
+            }
+
+            // 슬롯 UI 렌더링
+            renderSlotUI() {
+                const container = document.getElementById('slot-container');
+                if (!container) return;
+
+                const currentSlot = this.getCurrentSlot();
+                const sharedDiamond = this.getSharedDiamond();
+
+                let html = `<div style="margin-bottom:10px;color:#00bcd4;font-weight:bold;">💎 공유 다이아: ${NumFormat.format(sharedDiamond)}</div>`;
+
+                for (let i = 0; i < 3; i++) {
+                    const data = this.getSlotData(i);
+                    const isActive = i === currentSlot;
+                    const isEmpty = !data;
+
+                    let slotInfo = '빈 슬롯';
+                    if (data) {
+                        const lv = data.p?.lv || 1;
+                        const stage = data.stage || 1;
+                        const savedAt = data.savedAt ? new Date(data.savedAt).toLocaleDateString() : '-';
+                        slotInfo = `Lv.${lv} / Stage ${stage}<br><small style="color:#888;">${savedAt}</small>`;
+                    }
+
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px;margin:5px 0;border-radius:8px;background:${isActive ? 'rgba(46,204,113,0.3)' : 'rgba(0,0,0,0.3)'};border:2px solid ${isActive ? '#2ecc71' : '#444'};">
+                            <div style="flex:1;">
+                                <div style="font-weight:bold;color:${isActive ? '#2ecc71' : '#fff'};">슬롯 ${i + 1} ${isActive ? '(현재)' : ''}</div>
+                                <div style="font-size:12px;color:#aaa;">${slotInfo}</div>
+                            </div>
+                            ${!isActive ? `<button class="btn-small" onclick="game.switchSlot(${i})" style="padding:5px 10px;">선택</button>` : ''}
+                            ${!isEmpty && !isActive ? `<button class="btn-small" onclick="game.deleteSlot(${i})" style="padding:5px 10px;background:#e74c3c;">삭제</button>` : ''}
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
             }
 
             wait(ms) { return new Promise(r => setTimeout(r, ms)); }
