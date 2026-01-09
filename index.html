@@ -1799,16 +1799,22 @@
             }
 
             renderInventory() {
-                // 현재 장착 무기 표시
+                // 현재 장착 무기 표시 (equippedWeapon 우선, 없으면 wIdx 폴백)
                 const eqDiv = document.getElementById('inv-equipped');
-                if (this.p.equippedWeapon) {
-                    const w = this.p.equippedWeapon;
+                const w = this.p.equippedWeapon || this.r.weapons[this.p.wIdx] || this.r.weapons[0];
+
+                if (w && w.name !== '맨주먹') {
                     const grade = this.getGradeInfo(w.grade);
+                    const weaponAtk = this.getWeaponAtk(w);
+                    const isImage = w.icon && (w.icon.indexOf('http') === 0 || w.icon.indexOf('data:') === 0 || w.icon.indexOf('assets/') === 0);
+                    const iconHtml = isImage
+                        ? `<img src="${w.icon}" style="width:40px;height:40px;object-fit:contain;">`
+                        : `<span style="font-size:40px;">${w.icon || '🗡️'}</span>`;
                     eqDiv.innerHTML = `
-                        <span style="font-size:40px;">${w.icon}</span>
+                        ${iconHtml}
                         <div>
                             <div style="font-weight:bold;color:${grade.color}">${w.name}</div>
-                            <div style="color:#e74c3c;font-size:12px;">공격력 +${w.atk}</div>
+                            <div style="color:#e74c3c;font-size:12px;">공격력 +${weaponAtk}</div>
                             <div style="color:#888;font-size:10px;">${grade.name}</div>
                         </div>
                         <button class="btn-small" style="margin-left:auto;" onclick="game.unequipWeapon()">해제</button>
