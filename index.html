@@ -17,6 +17,32 @@
             user-select: none;
         }
 
+        /* 전역 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        /* 공통 오버레이 윈도우 스타일 */
+        .overlay-window {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         #game-container {
             width: 800px;
             height: 500px;
@@ -860,8 +886,9 @@
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             max-height: 200px;
-            overflow-y: auto;
+            overflow-y: scroll;
             margin: 10px 0;
+            padding-right: 5px;
         }
 
         .weapon-select-item {
@@ -978,7 +1005,7 @@
         </div>
 
         <div id="shop-overlay">
-            <div class="shop-window" style="width:450px">
+            <div class="shop-window overlay-window" style="width:450px;max-height:80vh;overflow-y:auto;">
                 <h2 style="color:#f1c40f">⛺ 상점</h2>
                 <p>골드: <span id="shop-gold">0</span> G</p>
 
@@ -1095,7 +1122,8 @@
 
         <!-- 뽑기 오버레이 -->
         <div id="gacha-overlay">
-            <div class="shop-window" style="width:400px;text-align:center">
+            <div class="shop-window overlay-window"
+                style="width:400px;text-align:center;max-height:80vh;overflow-y:auto;">
                 <h2 style="color:#d35400">🔮 무기 소환</h2>
                 <div style="margin:20px 0;font-size:14px;color:#bdc3c7">
                     <p>전설 등장 확률: <span style="color:#f1c40f">1%</span></p>
@@ -1141,7 +1169,7 @@
                         </select>
                     </div>
                     <div id="inv-list"
-                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:400px;overflow-y:auto;">
+                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:400px;overflow-y:scroll;padding-right:5px;">
                         <!-- 인벤토리 아이템들 -->
                     </div>
                 </div>
