@@ -1349,9 +1349,15 @@
             walk() {
                 if (this.p.hp <= 0) { this.die(); return; }
                 this.state = 'WALK';
-                document.querySelector('.tunnel-container').classList.add('moving');
-                document.getElementById('enemy-container').style.display = 'none';
                 const speed = this.getSpeedMultiplier();
+                const tunnelEl = document.querySelector('.tunnel-container');
+                tunnelEl.classList.add('moving');
+                // 배속에 맞게 배경 애니메이션 속도 조절
+                tunnelEl.style.animationDuration = (0.5 / speed) + 's';
+                document.querySelectorAll('.moving .wall-left, .moving .wall-right, .moving .floor, .moving .ceiling').forEach(el => {
+                    el.style.animationDuration = (0.5 / speed) + 's';
+                });
+                document.getElementById('enemy-container').style.display = 'none';
                 setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 1500 / speed);
             }
 
@@ -1489,7 +1495,8 @@
                 document.getElementById('enemy-container').style.display = 'none';
                 this.updateUI();
                 this.saveProgress(); // 자동저장
-                setTimeout(() => this.walk(), 3000);
+                const speed = this.getSpeedMultiplier();
+                setTimeout(() => this.walk(), 3000 / speed);
             }
 
             // 모든 오버레이 닫기
@@ -1632,7 +1639,7 @@
                 const goldPrices = [1000, 2000, 4000, 8000, 16000];
 
                 if (goldLevel >= 5) {
-                    document.getElementById('speed-gold-level').innerText = 'MAX';
+                    document.getElementById('speed-gold-level').innerText = 'Lv.5/5 (MAX)';
                     document.getElementById('speed-gold-price').innerText = '완료';
                     document.getElementById('speed-gold-upgrade').style.opacity = '0.6';
                 } else {
