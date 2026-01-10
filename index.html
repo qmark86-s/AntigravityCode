@@ -829,6 +829,7 @@
                 <div style="display:flex;gap:5px;margin-bottom:10px;">
                     <button class="btn-small shop-tab active" onclick="game.switchShopTab('items')">💪 능력치</button>
                     <button class="btn-small shop-tab" onclick="game.switchShopTab('weapons')">🗡️ 무기</button>
+                    <button class="btn-small shop-tab" onclick="game.switchShopTab('speed')">⚡ 배속</button>
                 </div>
 
                 <!-- 능력치 탭 -->
@@ -845,6 +846,28 @@
                 <!-- 무기 탭 -->
                 <div id="shop-weapons-tab" style="display:none;max-height:250px;overflow-y:auto;">
                     <!-- 동적 생성 -->
+                </div>
+
+                <!-- 배속 탭 -->
+                <div id="shop-speed-tab" style="display:none;">
+                    <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin-bottom:10px;">
+                        <div style="color:#00bcd4;font-weight:bold;">현재 배속: <span id="shop-current-speed">1.0x</span>
+                        </div>
+                    </div>
+
+                    <div style="color:#f1c40f;font-weight:bold;margin:10px 0;">💎 다이아 배속 (영구)</div>
+                    <div id="speed-diamond-2x" class="shop-item" onclick="game.buyDiamondSpeed(1)">
+                        <span>🚀 2배속</span><span>500💎</span>
+                    </div>
+                    <div id="speed-diamond-4x" class="shop-item" onclick="game.buyDiamondSpeed(2)">
+                        <span>⚡ 4배속</span><span>2000💎</span>
+                    </div>
+
+                    <div style="color:#f39c12;font-weight:bold;margin:15px 0 10px;">🪙 골드 배속 (누적 +10%)</div>
+                    <div id="speed-gold-upgrade" class="shop-item" onclick="game.buyGoldSpeed()">
+                        <span>🔧 배속 강화 <span id="speed-gold-level">Lv.0/5</span></span>
+                        <span id="speed-gold-price">1,000G</span>
+                    </div>
                 </div>
 
                 <button class="btn-small" style="margin-top:10px;width:100%" onclick="game.closeShop()">나가기</button>
@@ -1007,10 +1030,11 @@
                 <span id="ui-weapon-icon" style="font-size:20px;">🗡️</span>
                 <span id="ui-weapon" style="font-weight:bold;">맨주먹</span>
             </div>
-            <!-- 하단: 골드/다이아 -->
+            <!-- 하단: 골드/다이아/배속 -->
             <div style="display:flex;gap:15px;">
                 <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
                 <span style="color:#00bcd4;font-weight:bold">💎 <span id="ui-diamond">0</span></span>
+                <span id="ui-speed" style="color:#f39c12;font-weight:bold">⚡ 1.0x</span>
             </div>
         </div>
 
@@ -1239,7 +1263,9 @@
                     gold: 0, diamond: 1000, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
                     invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
                     inventory: [], // 인벤토리 (무기 객체 배열)
-                    equippedWeapon: null // 장착된 무기 객체
+                    equippedWeapon: null, // 장착된 무기 객체
+                    speedDiamondTier: 0, // 0=없음, 1=2배속, 2=4배속
+                    speedGoldLevel: 0    // 0~5 (각 +10%)
                 };
                 this.stage = 1;
                 this.state = 'IDLE';
@@ -1284,6 +1310,13 @@
                 return this.worldThemes[idx];
             }
 
+            // 배속 계산: 다이아 배속 × (1 + 골드 보너스)
+            getSpeedMultiplier() {
+                const diamondMult = [1, 2, 4][this.p.speedDiamondTier] || 1;
+                const goldBonus = this.p.speedGoldLevel * 0.1; // 0 ~ 0.5
+                return diamondMult * (1 + goldBonus);
+            }
+
             reload() {
                 this.r = settings.data;
                 const bg = this.r.backgrounds;
@@ -1318,7 +1351,8 @@
                 this.state = 'WALK';
                 document.querySelector('.tunnel-container').classList.add('moving');
                 document.getElementById('enemy-container').style.display = 'none';
-                setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 1500);
+                const speed = this.getSpeedMultiplier();
+                setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 1500 / speed);
             }
 
             meet() {
@@ -1377,15 +1411,17 @@
                     this.log(`❗ ${this.e.name} 등장!`);
                 }
 
-                const attackDelay = 1000 / this.p.aspd;
+                const speed = this.getSpeedMultiplier();
+                const attackDelay = 1000 / this.p.aspd / speed;
                 setTimeout(() => this.round(), attackDelay);
             }
 
             async round() {
                 if (this.state !== 'BATTLE') return;
                 this.atk(true);
-                if (this.e.hp <= 0) { setTimeout(() => this.win(), 500); return; }
-                const attackDelay = 1000 / this.p.aspd;
+                const speed = this.getSpeedMultiplier();
+                if (this.e.hp <= 0) { setTimeout(() => this.win(), 500 / speed); return; }
+                const attackDelay = 1000 / this.p.aspd / speed;
                 await this.wait(attackDelay * 0.6);
                 if (this.state === 'BATTLE') {
                     this.atk(false);
@@ -1395,10 +1431,11 @@
             }
 
             atk(isP) {
+                const speed = this.getSpeedMultiplier();
                 if (isP) {
                     const h = document.getElementById('right-hand');
                     h.classList.add('attack-anim');
-                    setTimeout(() => h.classList.remove('attack-anim'), 200);
+                    setTimeout(() => h.classList.remove('attack-anim'), 200 / speed);
                     const w = this.r.weapons[this.p.wIdx];
                     let d = this.p.atk + this.getWeaponAtk(w);
                     d = Math.max(1, d - Math.floor(this.e.def * 0.5));
@@ -1522,9 +1559,14 @@
             switchShopTab(tab) {
                 document.getElementById('shop-items-tab').style.display = tab === 'items' ? 'block' : 'none';
                 document.getElementById('shop-weapons-tab').style.display = tab === 'weapons' ? 'block' : 'none';
+                document.getElementById('shop-speed-tab').style.display = tab === 'speed' ? 'block' : 'none';
                 document.querySelectorAll('.shop-tab').forEach((btn, i) => {
-                    btn.classList.toggle('active', (i === 0 && tab === 'items') || (i === 1 && tab === 'weapons'));
+                    btn.classList.toggle('active',
+                        (i === 0 && tab === 'items') ||
+                        (i === 1 && tab === 'weapons') ||
+                        (i === 2 && tab === 'speed'));
                 });
+                if (tab === 'speed') this.updateSpeedShopUI();
             }
 
             buyWeapon(idx) {
@@ -1555,6 +1597,105 @@
                 this.updateUI();
                 this.renderWeaponShop();
                 document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
+            }
+
+            // 배속 상점 UI 업데이트
+            updateSpeedShopUI() {
+                const speed = this.getSpeedMultiplier();
+                document.getElementById('shop-current-speed').innerText = speed.toFixed(1) + 'x';
+
+                // 다이아 배속 상태 업데이트
+                const tier = this.p.speedDiamondTier;
+                const diamond2x = document.getElementById('speed-diamond-2x');
+                const diamond4x = document.getElementById('speed-diamond-4x');
+
+                if (tier >= 1) {
+                    diamond2x.innerHTML = '<span>🚀 2배속</span><span style="color:#27ae60">✓ 보유중</span>';
+                    diamond2x.style.opacity = '0.6';
+                } else {
+                    diamond2x.innerHTML = '<span>🚀 2배속</span><span>500💎</span>';
+                    diamond2x.style.opacity = '1';
+                }
+
+                if (tier >= 2) {
+                    diamond4x.innerHTML = '<span>⚡ 4배속</span><span style="color:#27ae60">✓ 보유중</span>';
+                    diamond4x.style.opacity = '0.6';
+                } else {
+                    // 차액 계산
+                    const cost = tier === 1 ? 1500 : 2000;
+                    diamond4x.innerHTML = `<span>⚡ 4배속</span><span>${cost}💎</span>`;
+                    diamond4x.style.opacity = '1';
+                }
+
+                // 골드 배속 상태 업데이트
+                const goldLevel = this.p.speedGoldLevel;
+                const goldPrices = [1000, 2000, 4000, 8000, 16000];
+
+                if (goldLevel >= 5) {
+                    document.getElementById('speed-gold-level').innerText = 'MAX';
+                    document.getElementById('speed-gold-price').innerText = '완료';
+                    document.getElementById('speed-gold-upgrade').style.opacity = '0.6';
+                } else {
+                    document.getElementById('speed-gold-level').innerText = `Lv.${goldLevel}/5`;
+                    document.getElementById('speed-gold-price').innerText = NumFormat.format(goldPrices[goldLevel]) + 'G';
+                    document.getElementById('speed-gold-upgrade').style.opacity = '1';
+                }
+            }
+
+            // 다이아 배속 구매
+            buyDiamondSpeed(tier) {
+                if (this.p.speedDiamondTier >= tier) {
+                    this.log('⚡ 이미 보유 중입니다!');
+                    return;
+                }
+
+                // 가격 계산 (차액제)
+                const prices = [0, 500, 2000];
+                const currentPaid = prices[this.p.speedDiamondTier];
+                const targetPrice = prices[tier];
+                const cost = targetPrice - currentPaid;
+
+                if (this.p.diamond < cost) {
+                    this.log('💎 다이아가 부족합니다!');
+                    return;
+                }
+
+                this.p.diamond -= cost;
+                this.p.speedDiamondTier = tier;
+
+                const speedNames = ['', '2배속', '4배속'];
+                this.log(`⚡ ${speedNames[tier]} 구매 완료! 현재 배속: ${this.getSpeedMultiplier().toFixed(1)}x`);
+
+                this.updateUI();
+                this.updateSpeedShopUI();
+                this.saveProgress();
+            }
+
+            // 골드 배속 구매
+            buyGoldSpeed() {
+                if (this.p.speedGoldLevel >= 5) {
+                    this.log('⚡ 최대 레벨입니다!');
+                    return;
+                }
+
+                const goldPrices = [1000, 2000, 4000, 8000, 16000];
+                const cost = goldPrices[this.p.speedGoldLevel];
+
+                if (this.p.gold < cost) {
+                    this.log('💰 골드가 부족합니다!');
+                    return;
+                }
+
+                this.p.gold -= cost;
+                this.p.speedGoldLevel++;
+
+                const bonus = this.p.speedGoldLevel * 10;
+                this.log(`🔧 배속 강화 Lv.${this.p.speedGoldLevel}! (+${bonus}%) 현재 배속: ${this.getSpeedMultiplier().toFixed(1)}x`);
+
+                this.updateUI();
+                this.updateSpeedShopUI();
+                document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
+                this.saveProgress();
             }
 
             // 뽑기 관련 함수
@@ -1745,6 +1886,14 @@
                     } else {
                         iconEl.innerHTML = w.icon || '🗡️';
                     }
+                }
+
+                // 배속 표시 업데이트
+                const speedEl = document.getElementById('ui-speed');
+                if (speedEl) {
+                    const speed = this.getSpeedMultiplier();
+                    speedEl.innerText = `⚡ ${speed.toFixed(1)}x`;
+                    speedEl.style.color = speed > 1 ? '#f39c12' : '#888';
                 }
 
                 this.updateHand();
@@ -2135,7 +2284,9 @@
                     gold: 0, diamond: 0, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
                     invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
                     inventory: [],
-                    equippedWeapon: null
+                    equippedWeapon: null,
+                    speedDiamondTier: 0,
+                    speedGoldLevel: 0
                 };
 
                 // 현재 슬롯에 초기 데이터 저장
