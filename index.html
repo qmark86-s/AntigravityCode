@@ -1972,12 +1972,10 @@
                     return;
                 }
 
-                // Use await to ensure async context settles
-                console.log('=== AWAITING DELAY ===');
-                await new Promise(r => setTimeout(r, 100));
-                console.log('=== POST-DELAY RENDER ===');
+                // 강제 리플로우 트리거 후 렌더링
+                const invOverlay = document.getElementById('inventory-overlay');
+                void invOverlay.offsetHeight; // 강제 동기 리플로우
                 this.renderInventory();
-                console.log('=== DONE ===');
             }
 
             equipWeapon(idx) {
@@ -1997,7 +1995,7 @@
                 const wepIdx = this.r.weapons.findIndex(w => w.name === item.name);
                 if (wepIdx >= 0) this.p.wIdx = wepIdx;
 
-                this.updateWeaponDisplay();
+                this.updateHand();
                 // Commented out: renderInventory is called by showItemActions
                 // this.renderInventory();
                 this.updateUI();
@@ -2010,7 +2008,7 @@
                 this.p.inventory.push(this.p.equippedWeapon);
                 this.p.equippedWeapon = null;
                 this.p.wIdx = 0; // 맨주먹
-                this.updateWeaponDisplay();
+                this.updateHand();
                 this.renderInventory();
                 this.updateUI();
                 this.saveProgress();
@@ -2322,7 +2320,12 @@
                         if (idx !== undefined) {
                             modal.style.display = 'none';
                             buttonsEl.removeEventListener('click', handleClick);
-                            resolve(buttons[parseInt(idx)].value);
+                            // 모달이 완전히 사라진 후 다음 프레임에서 resolve
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    resolve(buttons[parseInt(idx)].value);
+                                });
+                            });
                         }
                     };
                     buttonsEl.addEventListener('click', handleClick);
