@@ -768,6 +768,7 @@
             display: none;
             justify-content: center;
             align-items: center;
+            overflow-y: auto;
         }
 
         .smith-window {
@@ -776,8 +777,9 @@
             border-radius: 15px;
             border: 2px solid #e67e22;
             width: 500px;
-            max-height: 70vh;
+            max-height: 85vh;
             overflow-y: auto;
+            margin: 20px 0;
         }
 
         .smith-tab {
@@ -1144,8 +1146,8 @@
 
         <!-- 인벤토리 오버레이 -->
         <div id="inventory-overlay"
-            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:500;justify-content:center;align-items:center;">
-            <div class="shop-window overlay-window" style="width:500px;max-height:70vh;overflow-y:auto;">
+            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:500;justify-content:center;align-items:center;overflow-y:auto;">
+            <div class="shop-window overlay-window" style="width:500px;max-height:85vh;overflow-y:auto;margin:20px 0;">
                 <h2 style="color:#8b5cf6">🎒 가방</h2>
 
                 <!-- 현재 장착 장비 -->
@@ -1169,12 +1171,13 @@
                         </select>
                     </div>
                     <div id="inv-list"
-                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:280px;overflow-y:scroll;padding-right:5px;">
+                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:250px;overflow-y:scroll;padding-right:5px;">
                         <!-- 인벤토리 아이템들 -->
                     </div>
                 </div>
 
-                <div style="display:flex;gap:10px;">
+                <div
+                    style="display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(transparent,#1a1a2e 20%);padding-top:10px;">
                     <button class="btn-small" style="flex:1" onclick="game.openSmith()">🔨 대장간</button>
                     <button class="btn-small" style="flex:1" onclick="game.closeInventory()">닫기</button>
                 </div>
