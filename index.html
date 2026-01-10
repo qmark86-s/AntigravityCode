@@ -1188,6 +1188,14 @@
                         <span id="synth-grade-info" style="color:#888;">등급을 선택하세요</span>
                     </div>
 
+                    <!-- 합성 능력치 미리보기 -->
+                    <div id="synth-preview"
+                        style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
+                        <div style="color:#888;font-size:12px;">예상 공격력</div>
+                        <div id="synth-atk-preview" style="color:#e74c3c;font-size:18px;font-weight:bold;">+?? ~ +??
+                        </div>
+                    </div>
+
                     <div style="text-align:center;">
                         <span style="color:#888;">비용: </span>
                         <span id="synth-cost" style="color:#f1c40f;">0G</span>
@@ -1226,6 +1234,19 @@
                         <div class="enhance-stat">
                             <div style="color:#888;">실패 시</div>
                             <div class="enhance-stat-value enhance-warning" id="enhance-fail">-1</div>
+                        </div>
+                    </div>
+
+                    <!-- 강화 능력치 미리보기 -->
+                    <div id="enhance-preview"
+                        style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
+                        <div style="color:#888;font-size:12px;">공격력 변화</div>
+                        <div style="display:flex;justify-content:center;align-items:center;gap:10px;">
+                            <span id="enhance-atk-current" style="color:#888;font-size:16px;">+0</span>
+                            <span style="color:#27ae60;">→</span>
+                            <span id="enhance-atk-after"
+                                style="color:#27ae60;font-size:18px;font-weight:bold;">+0</span>
+                            <span id="enhance-atk-diff" style="color:#f39c12;font-size:12px;">(+0)</span>
                         </div>
                     </div>
 
@@ -2416,10 +2437,22 @@
                         `<span style="color:${gradeInfo.color}">${gradeInfo.name}</span> → <span style="color:${nextGradeInfo.color}">${nextGradeInfo.name}</span>`;
                     document.getElementById('synth-cost').innerText = NumFormat.format(gradeCosts[grade]) + 'G';
                     document.getElementById('synth-result').innerHTML = `<span style="color:${nextGradeInfo.color}">?</span>`;
+
+                    // 합성 결과 예상 공격력 표시
+                    const weaponsOfGrade = this.r.weapons.filter(w => w.grade === nextGrade);
+                    if (weaponsOfGrade.length > 0) {
+                        const minAtk = Math.min(...weaponsOfGrade.map(w => this.getWeaponAtk(w)));
+                        const maxAtk = Math.max(...weaponsOfGrade.map(w => this.getWeaponAtk(w)));
+                        document.getElementById('synth-preview').style.display = 'block';
+                        document.getElementById('synth-atk-preview').innerText = `+${NumFormat.format(minAtk)} ~ +${NumFormat.format(maxAtk)}`;
+                    } else {
+                        document.getElementById('synth-preview').style.display = 'none';
+                    }
                 } else {
                     document.getElementById('synth-grade-info').innerText = '등급을 선택하세요';
                     document.getElementById('synth-cost').innerText = '0G';
                     document.getElementById('synth-result').innerHTML = '<span style="color:#666">?</span>';
+                    document.getElementById('synth-preview').style.display = 'none';
                 }
 
                 // 버튼 활성화
@@ -2518,6 +2551,7 @@
                     document.getElementById('enhance-rate').innerText = '-';
                     document.getElementById('enhance-cost').innerText = '-';
                     document.getElementById('enhance-btn').disabled = true;
+                    document.getElementById('enhance-preview').style.display = 'none';
                     return;
                 }
 
@@ -2538,6 +2572,7 @@
                     document.getElementById('enhance-cost').innerText = '-';
                     document.getElementById('enhance-fail').innerText = '-';
                     document.getElementById('enhance-btn').disabled = true;
+                    document.getElementById('enhance-preview').style.display = 'none';
                 } else {
                     const rate = enhanceRates[enh];
                     const cost = enhanceCosts[enh];
@@ -2545,6 +2580,17 @@
                     document.getElementById('enhance-cost').innerText = NumFormat.format(cost) + 'G';
                     document.getElementById('enhance-fail').innerText = enh > 0 ? '-1' : '유지';
                     document.getElementById('enhance-btn').disabled = this.p.gold < cost;
+
+                    // 강화 후 예상 공격력 표시
+                    const currentAtk = this.getWeaponAtk(weapon);
+                    const enhancedWeapon = { ...weapon, enhancement: enh + 1 };
+                    const afterAtk = this.getWeaponAtk(enhancedWeapon);
+                    const diff = afterAtk - currentAtk;
+
+                    document.getElementById('enhance-preview').style.display = 'block';
+                    document.getElementById('enhance-atk-current').innerText = `+${NumFormat.format(currentAtk)}`;
+                    document.getElementById('enhance-atk-after').innerText = `+${NumFormat.format(afterAtk)}`;
+                    document.getElementById('enhance-atk-diff').innerText = `(+${NumFormat.format(diff)})`;
                 }
             }
 
