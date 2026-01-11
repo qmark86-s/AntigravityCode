@@ -1871,12 +1871,54 @@
 
             die() {
                 this.log(`💀 사망... 복귀`);
+                this.showDeathMessage(); // 사망 연출
+
                 this.stage = 1; this.p.hp = this.p.maxHp;
                 document.getElementById('enemy-container').style.display = 'none';
                 this.updateUI();
                 this.saveProgress(); // 자동저장
                 const speed = this.getSpeedMultiplier();
-                setTimeout(() => this.walk(), 3000 / speed);
+                // 3000 -> 1500 (절반으로 단축)
+                setTimeout(() => this.walk(), 1500 / speed);
+            }
+
+            showDeathMessage() {
+                if (!document.getElementById('death-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'death-style';
+                    style.textContent = `
+                        .death-overlay {
+                            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background: radial-gradient(circle, transparent 20%, rgba(139, 0, 0, 0.8) 90%);
+                            display: flex; justify-content: center; align-items: center;
+                            z-index: 10000; animation: fadeIn 0.3s forwards;
+                            pointer-events: none;
+                        }
+                        .death-text {
+                            font-size: 100px; font-weight: 900; color: #c0392b;
+                            text-shadow: 0 0 50px black; letter-spacing: 5px;
+                            animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                        }
+                        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                        @keyframes dropIn { 
+                            0% { transform: scale(3); opacity: 0; } 
+                            100% { transform: scale(1); opacity: 1; } 
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                const div = document.createElement('div');
+                div.className = 'death-overlay';
+                div.innerHTML = '<div class="death-text">YOU DIED</div>';
+                document.body.appendChild(div);
+
+                // 1.2초 후 제거
+                setTimeout(() => {
+                    div.style.transition = 'opacity 0.3s';
+                    div.style.opacity = '0';
+                    setTimeout(() => div.remove(), 300);
+                }, 1200);
             }
 
             // 모든 오버레이 닫기
