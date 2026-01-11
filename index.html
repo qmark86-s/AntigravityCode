@@ -1034,13 +1034,16 @@
 
                 <!-- 능력치 탭 -->
                 <div id="shop-items-tab">
-                    <div class="shop-item" onclick="game.buy('potion')"><span>💖 회복</span><span>50G</span></div>
-                    <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span>100G</span></div>
-                    <div class="shop-item" onclick="game.buy('aspd')"><span>⚡ 공격속도 +0.1</span><span>150G</span></div>
-                    <div class="shop-item" onclick="game.buy('critRate')"><span>🎯 치명타확률 +1%</span><span>200G</span>
-                    </div>
-                    <div class="shop-item" onclick="game.buy('critDmg')"><span>💥 치명타배수 +10%</span><span>250G</span>
-                    </div>
+                    <div class="shop-item" onclick="game.buy('potion')"><span>💖 회복</span><span
+                            id="shop-cost-potion">50G</span></div>
+                    <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span
+                            id="shop-cost-atk">100G</span></div>
+                    <div class="shop-item" onclick="game.buy('aspd')"><span>⚡ 공격속도 +0.1</span><span
+                            id="shop-cost-aspd">150G</span></div>
+                    <div class="shop-item" onclick="game.buy('critRate')"><span>🎯 치명타확률 +1%</span><span
+                            id="shop-cost-critRate">200G</span></div>
+                    <div class="shop-item" onclick="game.buy('critDmg')"><span>💥 치명타배수 +10%</span><span
+                            id="shop-cost-critDmg">250G</span></div>
                 </div>
 
                 <!-- 무기 탭 -->
@@ -1570,19 +1573,31 @@
         };
 
         class Game {
+            // 밸런스 테스트를 위한 강제 초기화 (한 번만 실행되도록 플래그 처리 권장하지만, 사용자 요청에 따라 매번 리셋될 수 있음 - 주의)
+            // 사용자가 "캐릭터 모두 리셋"을 요청했으므로 이 세션에서는 생성자에서 리셋을 수행.
+            // 실제 상용 배포시에는 제거해야 함.
             constructor() {
+
                 this.baseStats = { atk: 10, maxHp: 100, aspd: 1.0, critRate: 5, critDmg: 150 };
+                // 스탯 포인트 투자 횟수
                 this.invested = { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 };
+                // 골드 강화 횟수 (새로 추가됨)
+                this.purchased = { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 };
+
                 this.statPerPoint = { atk: 2, maxHp: 10, aspd: 0.02, critRate: 0.5, critDmg: 5 };
+                // 골드 강화 당 증가량
+                this.goldUpgradeStats = { atk: 5, maxHp: 50, aspd: 0.05, critRate: 0.5, critDmg: 5 };
+
                 this.p = {
                     hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
                     atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
                     gold: 0, diamond: 1000, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
                     invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
-                    inventory: [], // 인벤토리 (무기 객체 배열)
-                    equippedWeapon: null, // 장착된 무기 객체
-                    speedDiamondTier: 0, // 0=없음, 1=2배속, 2=4배속
-                    speedGoldLevel: 0    // 0~5 (각 +10%)
+                    purchased: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 }, // 저장 데이터 호환성
+                    inventory: [],
+                    equippedWeapon: null,
+                    speedDiamondTier: 0,
+                    speedGoldLevel: 0
                 };
                 this.stage = 1;
                 this.state = 'IDLE';
@@ -1700,10 +1715,8 @@
                 const ml = this.r.monsters;
                 const b = isBoss ? ml[ml.length - 1] : ml[Math.floor(Math.random() * (ml.length - 1))];
 
-                // 스케일링: 스테이지 + 월드 보너스
-                const stageScale = 1 + this.stage * 0.1;
-                const worldScale = 1 + (this.currentWorld - 1) * 0.5;
-                const m = stageScale * worldScale * bossMult;
+                // 스케일링: 지수 성장 (1.05^stage) - 약 100스테이지에서 130배
+                const m = Math.pow(1.05, this.stage) * bossMult;
 
                 this.e = {
                     name: isBoss ? `👑 ${b.name} (보스)` : b.name,
@@ -1886,6 +1899,9 @@
 
                 // 무기 목록 렌더링
                 this.renderWeaponShop();
+
+                // 가격 업데이트
+                this.updateShopCosts();
 
                 // 기본 탭으로 리셋
                 this.switchShopTab('items');
@@ -2192,21 +2208,86 @@
                 this.log(`🎰 ${results.length}회 뽑기! 최고: [${this.getGradeInfo(best.grade).name}] ${best.weapon.name}`);
             }
 
+            getUpgradeCost(t) {
+                const baseCosts = { potion: 50, upgrade: 100, aspd: 150, critRate: 200, critDmg: 250 };
+                if (!baseCosts[t]) return 0;
+                if (t === 'potion') return baseCosts[t];
+
+                const keyMap = { upgrade: 'atk', aspd: 'aspd', critRate: 'critRate', critDmg: 'critDmg' };
+                const key = keyMap[t];
+                // purchased가 없는 레거시 데이터 대비
+                if (!this.p.purchased) this.p.purchased = { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 };
+                const count = this.p.purchased[key] || 0;
+
+                return Math.floor(baseCosts[t] * Math.pow(1.1, count));
+            }
+
+            updateShopCosts() {
+                const types = ['potion', 'upgrade', 'aspd', 'critRate', 'critDmg'];
+                const idMap = { potion: 'shop-cost-potion', upgrade: 'shop-cost-atk', aspd: 'shop-cost-aspd', critRate: 'shop-cost-critRate', critDmg: 'shop-cost-critDmg' };
+
+                types.forEach(t => {
+                    const cost = this.getUpgradeCost(t);
+                    const el = document.getElementById(idMap[t]);
+                    if (el) el.innerText = NumFormat.format(cost) + 'G';
+                });
+            }
+
             buy(t) {
-                if (t === 'potion' && this.p.gold >= 50) { this.p.gold -= 50; this.p.hp = this.p.maxHp; this.log("💖 체력 회복!"); }
-                else if (t === 'upgrade' && this.p.gold >= 100) { this.p.gold -= 100; this.p.atk += 5; this.log("💪 공격력 +5!"); }
-                else if (t === 'aspd' && this.p.gold >= 150) { this.p.gold -= 150; this.p.aspd += 0.1; this.log("⚡ 공격속도 +0.1!"); }
-                else if (t === 'critRate' && this.p.gold >= 200) { this.p.gold -= 200; this.p.critRate = Math.min(this.p.critRate + 1, 100); this.log("🎯 치명타확률 +1%!"); }
-                else if (t === 'critDmg' && this.p.gold >= 250) { this.p.gold -= 250; this.p.critDmg += 10; this.log("💥 치명타배수 +10%!"); }
-                else if (t === 'gacha' && this.p.gold >= 200) {
-                    this.p.gold -= 200;
-                    const wl = this.r.weapons;
-                    const i = Math.floor(Math.random() * (wl.length - 1)) + 1;
-                    this.p.wIdx = i;
-                    this.log(`🎲 ${wl[i].name} 획득!`);
+                const cost = this.getUpgradeCost(t);
+
+                if (this.p.gold < cost) {
+                    this.log('💰 골드가 부족합니다!');
+                    return;
                 }
+
+                if (t === 'potion') {
+                    this.p.gold -= cost;
+                    this.p.hp = this.p.maxHp;
+                    this.log("💖 체력 회복!");
+                }
+                else if (t === 'upgrade') {
+                    this.p.gold -= cost;
+                    this.p.atk += 5;
+                    this.p.purchased.atk++;
+                    this.log(`💪 공격력 강화! (+5) 비용: ${NumFormat.format(cost)}G`);
+                }
+                else if (t === 'aspd') {
+                    if (this.p.aspd >= 5.0) { this.log("⚡ 최대 공격속도 도달!"); return; }
+                    this.p.gold -= cost;
+                    this.p.aspd += 0.1;
+                    this.p.purchased.aspd++;
+                    this.log(`⚡ 공격속도 강화! (+0.1) 비용: ${NumFormat.format(cost)}G`);
+                }
+                else if (t === 'critRate') {
+                    this.p.gold -= cost;
+                    this.p.critRate = Math.min(this.p.critRate + 1, 100);
+                    this.p.purchased.critRate++;
+                    this.log(`🎯 치명타확률 강화! (+1%) 비용: ${NumFormat.format(cost)}G`);
+                }
+                else if (t === 'critDmg') {
+                    this.p.gold -= cost;
+                    this.p.critDmg += 10;
+                    this.p.purchased.critDmg++;
+                    this.log(`💥 치명타배수 강화! (+10%) 비용: ${NumFormat.format(cost)}G`);
+                }
+                else if (t === 'gacha') {
+                    // 가챠는 별도 처리 되지만 여기서 호출될 수도 있음 (기존 코드 유지)
+                    // 하지만 doGacha 함수가 따로 있으므로 이곳의 gacha 로직은 사실상 레거시일 수 있음.
+                    // 기존 코드에 gacha 버튼은 doGacha 호출함. buy('gacha')는 상점 아이템 탭에 없음.
+                    // 안전하게 유지.
+                    if (this.p.gold >= 200) {
+                        this.p.gold -= 200;
+                        const wl = this.r.weapons;
+                        const i = Math.floor(Math.random() * (wl.length - 1)) + 1;
+                        this.p.wIdx = i;
+                        this.log(`🎲 ${wl[i].name} 획득!`);
+                    }
+                }
+
                 this.updateUI();
                 this.updateHand();
+                this.updateShopCosts(); // 가격 갱신
                 document.getElementById('shop-gold').innerText = NumFormat.format(this.p.gold);
             }
 
