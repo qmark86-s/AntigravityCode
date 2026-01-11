@@ -1592,7 +1592,7 @@
 
                 // 월드 & 보스 시스템
                 this.stagesPerWorld = 100;
-                this.bossInterval = 25;
+                this.bossInterval = 10; // 10스테이지마다 보스
                 this.worldThemes = [
                     { name: "던전", hue: 0 },      // 기본
                     { name: "숲", hue: 90 },       // 초록
@@ -1717,8 +1717,8 @@
                 const isImage = this.e.icon.indexOf('http') === 0 || this.e.icon.indexOf('data:') === 0 || this.e.icon.indexOf('assets/') === 0;
                 if (isImage) {
                     em.style.display = 'none'; im.style.display = 'block'; im.src = this.e.icon;
-                    // 보스면 크게 표시
-                    im.style.transform = isBoss ? 'scale(1.3)' : 'scale(1)';
+                    // 보스면 1.5배 크게 표시
+                    im.style.transform = isBoss ? 'scale(1.5)' : 'scale(1)';
                     im.style.filter = isBoss ? 'drop-shadow(0 0 30px gold)' : 'drop-shadow(0 0 20px rgba(255,0,0,0.5))';
                 } else {
                     im.style.display = 'none'; em.style.display = 'block'; em.innerText = this.e.icon;
@@ -1730,6 +1730,7 @@
 
                 if (isBoss) {
                     this.log(`🔥 보스 등장! ${this.e.name}`);
+                    this.showBossMessage();
                 } else {
                     this.log(`❗ ${this.e.name} 등장!`);
                 }
@@ -1739,6 +1740,43 @@
                 setTimeout(() => this.round(), attackDelay);
             }
 
+            showBossMessage() {
+                // 보스 스테이지 메시지 표시
+                const msg = document.createElement('div');
+                msg.innerHTML = '⚔️ 보스 스테이지! ⚔️';
+                msg.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0);
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #f1c40f;
+                    text-shadow: 0 0 20px #e74c3c, 0 0 40px #c0392b;
+                    z-index: 9999;
+                    pointer-events: none;
+                    animation: bossAppear 1.5s ease-out forwards;
+                `;
+                document.body.appendChild(msg);
+
+                // CSS 애니메이션 추가
+                if (!document.getElementById('boss-anim-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'boss-anim-style';
+                    style.textContent = `
+                        @keyframes bossAppear {
+                            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                            30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+                            50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // 자동 제거
+                setTimeout(() => msg.remove(), 1500);
+            }
             async round() {
                 if (this.state !== 'BATTLE') return;
                 this.atk(true);
