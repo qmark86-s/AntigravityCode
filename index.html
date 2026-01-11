@@ -1606,19 +1606,25 @@
                 this.updateUI();
             }
 
-            // 현재 월드 번호 (1부터 시작)
+            // 현재 월드 번호 (100웨이브 = 1월드)
             get currentWorld() {
-                return Math.floor((this.stage - 1) / this.stagesPerWorld) + 1;
+                return Math.floor((this.stage - 1) / 100) + 1;
             }
 
-            // 현재 월드 내 스테이지 (1-100)
-            get stageInWorld() {
-                return ((this.stage - 1) % this.stagesPerWorld) + 1;
+            // 현재 UI 표시 스테이지 (1-1 ~ 1-10)
+            get currentDisplayStage() {
+                // 100웨이브를 10개 스테이지로 나눔 (10웨이브/스테이지)
+                return Math.ceil(((this.stage - 1) % 100 + 1) / 10);
             }
 
-            // 보스 스테이지 여부
+            // 현재 웨이브 (1-10)
+            get currentWave() {
+                return (this.stage - 1) % 10 + 1;
+            }
+
+            // 보스 스테이지 여부 (매 월드 마지막, 즉 100웨이브 단위)
             get isBossStage() {
-                return this.stageInWorld % this.bossInterval === 0;
+                return this.stage % 100 === 0;
             }
 
             // 현재 월드 테마
@@ -1725,7 +1731,13 @@
                 }
                 document.getElementById('enemy-container').style.display = 'block';
                 document.getElementById('hud-name').innerText = this.e.name;
-                document.getElementById('hud-stage').innerText = `W${this.currentWorld}-${this.stageInWorld}`;
+                let stageText = `${this.currentWorld}-${this.currentDisplayStage}`;
+                if (this.isBossStage) {
+                    stageText += " Boss Stage";
+                } else {
+                    stageText += ` Wave ${this.currentWave}/10`;
+                }
+                document.getElementById('hud-stage').innerText = stageText;
                 this.updateEHp();
 
                 if (isBoss) {
