@@ -141,7 +141,79 @@
             border-color: #fff;
             transform: scale(1.05);
             background: #333;
+        }
+
+        /* Unified Slot Card Style (Matches save-slot but more flexible) */
+        .slot-card {
+            width: 150px;
+            height: 200px;
+            border: 2px solid #555;
+            background: #222;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .slot-card:hover {
+            border-color: #fff;
+            transform: scale(1.05);
             background: #333;
+        }
+
+        .slot-card.locked {
+            border-color: #f1c40f;
+            opacity: 0.7;
+        }
+
+        .slot-card.empty {
+            border-style: dashed;
+            opacity: 0.6;
+        }
+
+        .slot-header {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .slot-lv {
+            font-size: 12px;
+            background: #2ecc71;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .slot-detail {
+            font-size: 14px;
+            margin: 2px 0;
+            color: #ccc;
+        }
+
+        .slot-time {
+            font-size: 10px;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        .slot-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .slot-price {
+            margin-top: 5px;
+            color: #f1c40f;
+            font-size: 12px;
         }
 
         /* 2D UI Layers */
@@ -1092,6 +1164,31 @@
             color: #f39c12;
             font-weight: bold;
         }
+
+        /* Home Button Style */
+        #btn-home {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #fff;
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        #btn-home:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
     </style>
 </head>
 
@@ -1134,18 +1231,9 @@
         <div id="slot-select-screen">
             <h1>Select Save Slot</h1>
             <div class="slot-container">
-                <div class="save-slot" onclick="game.selectSlot(1)">
-                    <div class="slot-title">Slot 1</div>
-                    <div class="slot-info" id="slot-1-info">Empty</div>
-                </div>
-                <div class="save-slot" onclick="game.selectSlot(2)">
-                    <div class="slot-title">Slot 2</div>
-                    <div class="slot-info" id="slot-2-info">Empty</div>
-                </div>
-                <div class="save-slot" onclick="game.selectSlot(3)">
-                    <div class="slot-title">Slot 3</div>
-                    <div class="slot-info" id="slot-3-info">Empty</div>
-                </div>
+                <div id="slot-1-card"></div>
+                <div id="slot-2-card"></div>
+                <div id="slot-3-card"></div>
             </div>
         </div>
 
@@ -1186,8 +1274,10 @@
             <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
                 <h2>💾 캐릭터 슬롯</h2>
                 <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
-                <div id="slot-container">
-                    <!-- 슬롯 UI가 여기에 렌더링됨 -->
+                <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
+                    <button class="btn-save" onclick="game.switchSlot(1)" style="flex:1;">Slot 1</button>
+                    <button class="btn-save" onclick="game.switchSlot(2)" style="flex:1;">Slot 2</button>
+                    <button class="btn-save" onclick="game.switchSlot(3)" style="flex:1;">Slot 3</button>
                 </div>
             </div>
 
@@ -1988,48 +2078,71 @@
                 // Ideally we show "Current Diamonds: XXX" on the slot screen.
                 // Using existing slot-info blocks.
 
+                // Use helper to render slots
                 for (let i = 1; i <= 3; i++) {
-                    const el = document.getElementById(`slot-${i}-info`);
-                    if (!el) continue;
-
-                    const isUnlocked = SharedData.isSlotUnlocked(i);
-
-                    if (!isUnlocked) {
-                        el.innerHTML = `
-                            <div style="font-size:24px;">🔒</div>
-                            <div style="color:#f1c40f">Locked</div>
-                            <div style="font-size:12px;">${NumFormat.format(GAME_PRICES.slotUnlock)} 💎</div>
-                        `;
-                        // Parent click handler needs to handle this
-                    } else {
-                        const data = localStorage.getItem(`save_slot_${i}`);
-                        if (data) {
-                            try {
-                                const parsed = JSON.parse(data);
-                                const wName = parsed.p.equippedWeapon ? parsed.p.equippedWeapon.name : "맨주먹";
-                                el.innerHTML = `
-                                    <div style="color:#2ecc71">Lv.${parsed.p.lv}</div>
-                                    <div>Stage ${parsed.stage}</div>
-                                    <div style="font-size:0.8em;color:#aaa">${wName}</div>
-                                `;
-                            } catch (e) { el.innerHTML = "Corrupted"; }
-                        } else {
-                            el.innerHTML = "Empty<br>(Create New)";
-                        }
-                    }
+                    const el = document.getElementById(`slot-${i}-card`);
+                    if (el) el.innerHTML = this.getSlotCardHTML(i);
                 }
             }
 
-            async selectSlot(id) {
+            getSlotCardHTML(id) {
+                const isUnlocked = SharedData.isSlotUnlocked(id);
+                if (!isUnlocked) {
+                    return `
+                        <div class="slot-card locked" onclick="game.selectSlot(${id})">
+                            <div class="slot-icon">🔒</div>
+                            <div class="slot-title">Slot ${id}</div>
+                            <div class="slot-status">Locked</div>
+                            <div class="slot-price">${NumFormat.format(GAME_PRICES.slotUnlock)} 💎</div>
+                        </div>
+                    `;
+                }
+
+                const data = localStorage.getItem(`save_slot_${id}`);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        const wName = parsed.p.equippedWeapon?.name || "맨주먹";
+                        const dateStr = parsed.savedAt ? new Date(parsed.savedAt).toLocaleString() : 'No Date';
+
+                        // Active slot highlight (if used in settings)
+                        const isActive = this.slotId === id;
+                        const activeStyle = isActive ? 'border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71;' : '';
+
+                        return `
+                            <div class="slot-card" style="${activeStyle}" onclick="game.selectSlot(${id}, true)">
+                                <div class="slot-header">
+                                    <span class="slot-lv">Lv.${parsed.p.lv}</span>
+                                    <span class="slot-title">Slot ${id}</span>
+                                </div>
+                                <div class="slot-detail">Stage ${parsed.stage}</div>
+                                <div class="slot-detail" style="color:#aaa">${wName}</div>
+                                <div class="slot-time">${dateStr}</div>
+                            </div>
+                        `;
+                    } catch (e) { return `<div class="slot-card error">Corrupted</div>`; }
+                } else {
+                    return `
+                        <div class="slot-card empty" onclick="game.selectSlot(${id})">
+                            <div class="slot-icon">➕</div>
+                            <div class="slot-title">Slot ${id}</div>
+                            <div class="slot-status">New Game</div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Modified to handle Settings context (forceLoad=true switches immediately)
+            async selectSlot(id, forceLoad = false) {
                 if (!SharedData.isSlotUnlocked(id)) {
                     const diamonds = SharedData.getDiamond();
                     const price = GAME_PRICES.slotUnlock;
-
                     if (await this.showConfirmModal('슬롯 잠금 해제', `다이아 ${price}개를 사용하여 슬롯 ${id}을(를) 해제하시겠습니까?\n(보유: ${diamonds})`)) {
                         if (diamonds >= price) {
                             SharedData.setDiamond(diamonds - price);
                             SharedData.unlockSlot(id);
                             this.renderSlotScreen();
+                            this.updateSettingsSlotUI(); // Update settings too if open
                             this.log(`🔓 슬롯 ${id} 해제 완료!`);
                         } else {
                             await this.showConfirmModal('알림', '다이아가 부족합니다.', [{ text: '확인', value: true }]);
@@ -2038,10 +2151,38 @@
                     return;
                 }
 
+                if (forceLoad) {
+                    // Check if clicking current slot
+                    if (this.slotId === id) return;
+
+                    if (await this.showConfirmModal('캐릭터 변경', `슬롯 ${id}로 변경하시겠습니까?`)) {
+                        this.switchSlot(id);
+                    }
+                    return;
+                }
+
                 this.slotId = id;
                 document.getElementById('slot-select-screen').style.display = 'none';
                 document.getElementById('start-screen').style.display = 'flex';
                 this.load();
+            }
+
+            updateSettingsSlotUI() {
+                const container = document.getElementById('slot-container');
+                if (!container) return;
+                container.innerHTML = '';
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                container.style.gap = '10px';
+
+                for (let i = 1; i <= 3; i++) {
+                    const div = document.createElement('div');
+                    // We reuse getSlotCardHTML but need to ensure onclick works naturally
+                    // logic handles forceLoad=true via direct call in HTML string above?
+                    // Wait, string above uses game.selectSlot(id, true). Correct.
+                    div.innerHTML = this.getSlotCardHTML(i);
+                    container.appendChild(div.firstElementChild); // Extract from wrapper
+                }
             }
 
             switchSlot(id) {
@@ -2064,8 +2205,12 @@
             }
 
             renderPartyUI() {
-                this.updatePartySlot(document.getElementById('ally-slot-left'), 2);
-                this.updatePartySlot(document.getElementById('ally-slot-right'), 3);
+                // Determine other slots based on current slotId
+                const others = [1, 2, 3].filter(id => id !== this.slotId);
+
+                // Update buttons for the other two slots
+                this.updatePartySlot(document.getElementById('ally-slot-left'), others[0]);
+                this.updatePartySlot(document.getElementById('ally-slot-right'), others[1]);
             }
 
             updatePartySlot(el, targetSlotId) {
@@ -2210,8 +2355,10 @@
 
             start() {
                 document.getElementById('start-screen').style.display = 'none';
+                this.state = 'IDLE';
                 this.log("모험 시작!");
                 this.walk();
+                this.saveProgress();
             }
 
 
@@ -2457,10 +2604,11 @@
                     this.p.statPoints += 5;
                     this.p.hp = this.p.maxHp;
                     this.log(`🎉 레벨업! (Lv.${this.p.lv}) +5 스탯 포인트!`);
+                    this.saveProgress(); // Save on Level Up
                 }
                 this.stage++;
                 this.updateUI();
-                this.saveProgress(); // 자동저장
+                this.saveProgress(); // Save on Stage Clear
                 this.walk();
             }
 
@@ -2912,7 +3060,6 @@
                 else if (t === 'gacha') {
                     // 가챠는 별도 처리 되지만 여기서 호출될 수도 있음 (기존 코드 유지)
                     // 하지만 doGacha 함수가 따로 있으므로 이곳의 gacha 로직은 사실상 레거시일 수 있음.
-                    // 기존 코드에 gacha 버튼은 doGacha 호출함. buy('gacha')는 상점 아이템 탭에 없음.
                     // 안전하게 유지.
                     if (this.p.gold >= 200) {
                         this.p.gold -= 200;
@@ -3004,8 +3151,10 @@
 
             // 등급 정보 가져오기
             getGradeInfo(grade) {
+                // Fix for Iron Sword or legacy items potentially missing grade
+                if (!grade) grade = 'common';
                 const grades = this.r.grades || FALLBACK_DATA.grades;
-                return grades[grade] || grades.common;
+                return grades[grade] || grades['common'];
             }
 
             updateEHp() {
@@ -3068,6 +3217,7 @@
                 if (statName === 'critRate' && this.p.critRate > 100) this.p.critRate = 100;
                 this.updateStatPanel();
                 this.updateUI();
+                this.saveProgress(); // Ensure timestamp is recorded on start
             }
 
             async resetStats() {
@@ -3318,20 +3468,36 @@
 
             renderEnhanceWeaponList() {
                 const container = document.getElementById('enhance-weapon-list');
-                const inventory = this.p.inventory || [];
+                // Combine inventory + equipped for enhancement
+                let list = [...(this.p.inventory || [])];
+                if (this.p.equippedWeapon) {
+                    // Tag it as equipped for logic
+                    const eq = { ...this.p.equippedWeapon, isEquipped: true };
+                    // Prepend or Append? Prepend logic.
+                    list.unshift(eq);
+                }
 
                 container.innerHTML = '';
-                inventory.forEach((w, idx) => {
+                list.forEach((w, idx) => {
                     const grade = this.getGradeInfo(w.grade);
                     const isImage = w.icon && (w.icon.indexOf('http') === 0 || w.icon.indexOf('data:') === 0 || w.icon.indexOf('assets/') === 0);
                     const iconHtml = isImage
                         ? `<img src="${w.icon}">`
                         : `<span style="font-size:25px;">${w.icon || '🗡️'}</span>`;
+
+                    // Adjust index selection logic. 
+                    // Since "idx" here is loop index, we need to map it back to inventory index OR special 'equipped' flag.
+                    // Actually, simpler to just store the object reference or a unique ID in the UI and lookup.
+                    // BUT `selectEnhanceWeapon` expects an index.
+                    // If we use index for 'list', we need to change `selectEnhanceWeapon` to use 'list' instead of 'this.p.inventory'.
+
                     const isSelected = this.enhanceTarget === idx;
                     const enh = w.enhancement || 0;
+                    const eqBadge = w.isEquipped ? '<span style="position:absolute;top:0;right:0;background:red;font-size:8px;padding:2px;">E</span>' : '';
 
                     container.innerHTML += `
                         <div class="weapon-select-item ${isSelected ? 'selected' : ''}" style="border-color:${grade.color}" onclick="game.selectEnhanceWeapon(${idx})">
+                            ${eqBadge}
                             ${iconHtml}
                             ${enh > 0 ? `<span class="weapon-enhancement-badge">+${enh}</span>` : ''}
                         </div>
@@ -3347,7 +3513,11 @@
                 const enhanceRates = [100, 100, 90, 90, 70, 70, 50, 50, 30, 30];
                 const enhanceCosts = [100, 100, 300, 300, 800, 800, 2000, 2000, 5000, 5000];
 
-                if (this.enhanceTarget === null || !this.p.inventory[this.enhanceTarget]) {
+                // Reconstruct list to find target
+                let list = [...(this.p.inventory || [])];
+                if (this.p.equippedWeapon) list.unshift({ ...this.p.equippedWeapon, isEquipped: true });
+
+                if (this.enhanceTarget === null || !list[this.enhanceTarget]) {
                     document.getElementById('enhance-weapon-icon').innerHTML = '🗡️';
                     document.getElementById('enhance-weapon-name').innerText = '무기를 선택하세요';
                     document.getElementById('enhance-weapon-level').innerText = '';
@@ -3358,7 +3528,7 @@
                     return;
                 }
 
-                const weapon = this.p.inventory[this.enhanceTarget];
+                const weapon = list[this.enhanceTarget];
                 const grade = this.getGradeInfo(weapon.grade);
                 const enh = weapon.enhancement || 0;
                 const isMax = enh >= 10;
@@ -3403,7 +3573,22 @@
                 const enhanceRates = [100, 100, 90, 90, 70, 70, 50, 50, 30, 30];
                 const enhanceCosts = [100, 100, 300, 300, 800, 800, 2000, 2000, 5000, 5000];
 
-                const weapon = this.p.inventory[this.enhanceTarget];
+                // Reconstruct list
+                let list = [...(this.p.inventory || [])];
+                if (this.p.equippedWeapon) list.unshift({ ...this.p.equippedWeapon, isEquipped: true });
+
+                const wrapper = list[this.enhanceTarget];
+                if (!wrapper) return;
+
+                // Get ACTUAL object ref
+                let weapon;
+                if (wrapper.isEquipped) {
+                    weapon = this.p.equippedWeapon;
+                } else {
+                    // Start of inventory items in 'list' is index 1 if equipped exists, else 0
+                    const invIdx = this.p.equippedWeapon ? this.enhanceTarget - 1 : this.enhanceTarget;
+                    weapon = this.p.inventory[invIdx];
+                }
                 if (!weapon) return;
 
                 const enh = weapon.enhancement || 0;
@@ -3653,6 +3838,11 @@
                     savedAt: new Date().toISOString()
                 };
                 localStorage.setItem(`save_slot_${this.slotId}`, JSON.stringify(saveData));
+
+                // Refresh Settings UI if open to show updated timestamp
+                if (document.getElementById('settings-overlay').style.display === 'flex') {
+                    this.updateSettingsSlotUI();
+                }
             }
 
             load() {
@@ -3693,10 +3883,7 @@
                 this.p = {
                     hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
                     atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
-                    hp: 100, maxHp: 100, atk: 10, aspd: 1.0, critRate: 5, critDmg: 150,
-                    atkRaw: 10, maxHpRaw: 100, aspdRaw: 1.0, critRateRaw: 5, critDmgRaw: 150,
                     gold: 0, diamond: 0, lv: 1, exp: 0, maxExp: 100, wIdx: 0, statPoints: 5, pityCount: 0,
-                    invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
                     invested: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
                     purchased: { atk: 0, maxHp: 0, aspd: 0, critRate: 0, critDmg: 0 },
                     inventory: [],
@@ -3714,11 +3901,8 @@
                 }
             }
 
-            // ... (Legacy slot system removed)
-
             wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-            // 커스텀 확인 모달
             showConfirmModal(title, message, buttons = [{ text: '확인', value: true, style: '' }, { text: '취소', value: false, style: 'background:#666' }]) {
                 return new Promise(resolve => {
                     const modal = document.getElementById('confirm-modal');
@@ -3729,18 +3913,15 @@
                     titleEl.textContent = title;
                     messageEl.textContent = message;
 
-                    // 버튼 생성
                     buttonsEl.innerHTML = buttons.map((btn, i) =>
                         `<button class="btn-save" style="${btn.style || ''};padding:10px 25px;min-width:80px;" data-value="${i}">${btn.text}</button>`
                     ).join('');
 
-                    // 클릭 핸들러
                     const handleClick = (e) => {
                         const idx = e.target.dataset.value;
                         if (idx !== undefined) {
                             modal.style.display = 'none';
                             buttonsEl.removeEventListener('click', handleClick);
-                            // 모달이 완전히 사라진 후 다음 프레임에서 resolve
                             requestAnimationFrame(() => {
                                 requestAnimationFrame(() => {
                                     resolve(buttons[parseInt(idx)].value);
@@ -3749,13 +3930,16 @@
                         }
                     };
                     buttonsEl.addEventListener('click', handleClick);
-
                     modal.style.display = 'flex';
                 });
             }
 
             async confirmHome() {
-                if (await this.showConfirmModal('타이틀로 이동', '현재 진행상황을 저장하고\n타이틀 화면으로 이동하시겠습니까?')) {
+                const confirmed = await this.showConfirmModal(
+                    '타이틀로 이동',
+                    '현재 진행상황을 저장하고\n타이틀 화면으로 이동하시겠습니까?'
+                );
+                if (confirmed) {
                     this.saveProgress();
                     location.reload();
                 }
@@ -4127,13 +4311,31 @@
                     this.scene.remove(this.allyMeshes[ally.slotId]);
                 }
                 const mesh = this.createWeaponMesh(ally.weapon ? ally.weapon.id : 0);
+
+                // Dynamic Positioning
                 let cx = 0;
-                if (ally.slotId === 2) cx = -1.5;
-                else if (ally.slotId === 3) cx = 5.5;
-                else cx = -1.5;
+                // Get active slot from main game instance
+                const activeId = window.game ? window.game.slotId : 1;
+                // Identify "others" logic matches Game.renderPartyUI
+                const others = [1, 2, 3].filter(id => id !== activeId);
+
+                // Determine if this ally is the "First" or "Second" other
+                // others[0] -> Left (-2.5), others[1] -> Right (+2.5)
+                const allyIndex = others.indexOf(ally.slotId);
+
+                if (allyIndex === 0) cx = -2.5;       // Left Flank
+                else if (allyIndex === 1) cx = 2.5;   // Right Flank
+                else cx = -2.5;                       // Fallback
 
                 mesh.scale.set(0.7, 0.7, 0.7);
-                mesh.position.set(cx, -1.5, -4);
+                // Position slightly behind player (Z=-1) or aligned? 
+                // Player is at 0, -2, 1? No, camera looks at 0,-1,-1. 
+                // Checks Game3D.init: model.position.set(0, -2, 1). 
+                // Let's put allies at Z=0 (slightly behind player's Z=1) or Z=1 aligned.
+                // Original code was Z=-4 (behind). Let's bring them closer.
+                // Player Z=1. Let's put allies at Z=0.
+                mesh.position.set(cx, -1.5, 0);
+
                 this.scene.add(mesh);
                 this.allyMeshes[ally.slotId] = mesh;
             }
