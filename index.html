@@ -2189,7 +2189,8 @@
                         weapons: weaponsData.weapons.map((w, i) => ({
                             id: i, name: w.name, val: w.atk, price: w.price || 0, icon: w.icon
                         })),
-                        monsters: monstersData.monsters,
+                        // Fix: monsters.json is an array, not { monsters: [...] }
+                        monsters: Array.isArray(monstersData) ? monstersData : monstersData.monsters,
                         backgrounds: [
                             { id: 0, name: "벽", val: configData?.backgrounds?.wall || "assets/textures/wall.png" },
                             { id: 1, name: "바닥", val: configData?.backgrounds?.floor || "assets/textures/floor.png" },
@@ -2197,7 +2198,10 @@
                         ]
                     };
                     GAME_CONFIG = configData;
-                    console.log('📦 JSON Data loaded:', { monsters: DEFAULT_CONFIG.monsters.length, weapons: DEFAULT_CONFIG.weapons.length });
+                    console.log('📦 JSON Data loaded:', {
+                        monsters: DEFAULT_CONFIG.monsters ? DEFAULT_CONFIG.monsters.length : 0,
+                        weapons: DEFAULT_CONFIG.weapons ? DEFAULT_CONFIG.weapons.length : 0
+                    });
                 } else {
                     // 폴백 데이터 사용
                     DEFAULT_CONFIG = JSON.parse(JSON.stringify(FALLBACK_DATA));
