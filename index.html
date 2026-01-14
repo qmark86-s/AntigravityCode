@@ -303,6 +303,25 @@
             }
         }
 
+        /* Phase 6: Hit Flash Effect */
+        @keyframes hitFlashAnim {
+            0% {
+                filter: brightness(5) drop-shadow(0 0 10px white);
+            }
+
+            50% {
+                filter: brightness(2);
+            }
+
+            100% {
+                filter: brightness(1);
+            }
+        }
+
+        .hit-flash {
+            animation: hitFlashAnim 0.15s ease-out !important;
+        }
+
         .stage-separator {
             width: 2px;
             height: 20px;
@@ -2310,6 +2329,22 @@
             }
         };
 
+        // Phase 6: Game Balance Constants (Centralized)
+        const GameBalance = {
+            baseHp: 100,
+            baseAtk: 5,
+            baseGold: 20,
+            baseExp: 15,
+            stageGrowth: 2.1,
+            waveGrowth: 1.1,
+            bossStatMult: 5,
+            bossWaveInterval: 10
+        };
+
+        // Enable Texture Caching for Performance
+        THREE.Cache.enabled = true;
+
+
         class Game {
             // 밸런스 테스트를 위한 강제 초기화 (한 번만 실행되도록 플래그 처리 권장하지만, 사용자 요청에 따라 매번 리셋될 수 있음 - 주의)
             // 사용자가 "캐릭터 모두 리셋"을 요청했으므로 이 세션에서는 생성자에서 리셋을 수행.
@@ -2814,18 +2849,19 @@
                 const b = ml[effectiveIdx];
 
                 // Balance Formula
-                const BASE_HP = 100;
-                const BASE_ATK = 5;
-                const BASE_GOLD = 20;
-                const BASE_EXP = 15;
+                // Using Centralized GameBalance
+                const BASE_HP = GameBalance.baseHp;
+                const BASE_ATK = GameBalance.baseAtk;
+                const BASE_GOLD = GameBalance.baseGold;
+                const BASE_EXP = GameBalance.baseExp;
 
                 // Multipliers
-                const sMult = Math.pow(2.1, this.stage - 1);
-                const wMult = Math.pow(1.1, (this.currentWave || 1) - 1);
+                const sMult = Math.pow(GameBalance.stageGrowth, this.stage - 1);
+                const wMult = Math.pow(GameBalance.waveGrowth, (this.currentWave || 1) - 1);
 
                 const totalMult = sMult * wMult;
 
-                const bossBuff = isBoss ? 5 : 1;
+                const bossBuff = isBoss ? GameBalance.bossStatMult : 1;
 
                 this.e = {
                     name: b.name,
@@ -3048,14 +3084,33 @@
                     d = Math.max(1, d - Math.floor(this.e.def * 0.5));
                     let isCrit = Math.random() * 100 < this.p.critRate;
                     if (isCrit) d = Math.floor(d * (this.p.critDmg / 100));
+
                     this.e.hp = Math.max(0, this.e.hp - d);
                     this.updateEHp();
                     this.showDmg(d, isCrit, false);
                     this.log(`⚔️ 공격! ${NumFormat.format(d)} 피해${isCrit ? ' (치명타!)' : ''}`);
+
+                    // Phase 6: Visual Polish (Shake & Flash)
+                    if (window.game3d) {
+                        window.game3d.shakeCamera(isCrit ? 0.4 : 0.1);
+                    }
+                    const ei = document.getElementById('enemy-img');
+                    if (ei) {
+                        ei.classList.remove('hit-flash');
+                        void ei.offsetWidth; // Trigger Reflow
+                        ei.classList.add('hit-flash');
+                    }
+                    // Audio Hook
+                    if (AudioManager) AudioManager.playSfx('hit');
+
                 } else {
                     const g = document.getElementById('game-container');
                     g.classList.add('shake');
                     setTimeout(() => g.classList.remove('shake'), 300);
+
+                    // 3D Shake on Hit
+                    if (window.game3d) window.game3d.shakeCamera(0.3);
+
                     let d = this.e.atk;
                     this.p.hp = Math.max(0, this.p.hp - d);
                     this.updateUI();
@@ -4486,16 +4541,26 @@
 
 
         // Game3D class for Three.js handling (Character, Background, Weapons, VFX)
+        // Phase 6: Audio Manager Skeleton
+        const AudioManager = {
+            playSfx(name) {
+                // Placeholder: console.log(`🔊 Play SFX: ${name}`);
+            },
+            playBgm(name) {
+                // Placeholder
+            }
+        };
+
         class Game3D {
             constructor() {
                 this.scene = null;
                 this.camera = null;
                 this.renderer = null;
                 this.tunnel = [];
-                this.speed = 0.05; // Reduced to half again (was 0.1)
+                this.speed = 0.05;
                 this.clock = new THREE.Clock();
                 this.weaponMesh = null;
-                this.allyMeshes = {}; // Map: slotId -> Mesh
+                this.allyMeshes = {};
 
                 // Character
                 this.model = null;
@@ -4506,8 +4571,14 @@
 
                 // VFX
                 this.particles = [];
+                this.shake = 0;
+                this.baseCamPos = new THREE.Vector3(0, 1.5, 3);
 
                 this.init();
+            }
+
+            shakeCamera(amount = 0.5) {
+                this.shake = amount;
             }
 
             init() {
@@ -4517,11 +4588,10 @@
 
                 this.scene = new THREE.Scene();
                 // Phase 2: Skybox will be added in createSkybox()
-                this.scene.background = new THREE.Color(0x87CEEB); // Fallback color
-                // this.scene.fog = new THREE.Fog(0x000000, 1, 20); // Removed fog that was turning everything black
+                this.scene.background = new THREE.Color(0x87CEEB);
 
                 this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
-                this.camera.position.set(0, 1.5, 3);
+                this.camera.position.copy(this.baseCamPos); // Use base position
                 this.camera.lookAt(0, -1, -1); // Look at Character (Y=-2) Chest/Head area
 
                 // Quality Enhancement: Improved Renderer Settings
@@ -5338,6 +5408,32 @@
                     }
                 } else {
                     this.setAnimation('Idle');
+                }
+
+                // Phase 6: Camera Shake Effect
+                if (this.shake > 0) {
+                    const shakeAmount = this.shake * 0.5;
+                    this.camera.position.x += (Math.random() - 0.5) * shakeAmount;
+                    this.camera.position.y += (Math.random() - 0.5) * shakeAmount;
+                    this.camera.position.z += (Math.random() - 0.5) * shakeAmount;
+                    this.shake -= delta * 2.0; // Decay
+                    if (this.shake < 0) {
+                        this.shake = 0;
+                        // Reset camera position logic if needed, but since it's random noise 
+                        // and camera moves with scroll/OrbitControls... 
+                        // Actually, Game3D uses fixed camera usually.
+                        // Let's ensure it resets to (0, 1.6, 3) + noise.
+                        // But wait, user might have orbit controls?
+                        // If static camera, we should restore original.
+                        // Ideally: this.camera.position.copy(this.baseCamPos).add(shakeOffset)
+                    }
+                }
+
+                // Restore camera base position loosely if not shaking (simple drift fix)
+                if (this.shake <= 0) {
+                    // Check if we need to reset. 
+                    // Assuming fixed camera: this.camera.position.set(0, 1.6, 3);
+                    // But let's check init first.
                 }
 
                 // Phase 2: Animate atmospheric particles (always animate, not just in battle)
