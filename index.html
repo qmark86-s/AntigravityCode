@@ -5274,31 +5274,32 @@
                 if (window.game && window.game.state === 'BATTLE') {
                     this.setAnimation('Run');
 
-                    const worldMove = this.speed * 2; // Movement Speed
+                    // Slower movement for better feel
+                    const worldMove = this.speed * 1.0;
 
                     // Scroll Textures for Infinite Tunnel Effect
-                    // Floor & Ceiling: Move offset Y to scroll forward
+                    // Direction Fixed: Use += to move texture "towards" camera (visual flow)
+                    const texSpeed = 0.05; // Reduced from 0.1 for slower background
+
                     if (this.floorMesh && this.floorMesh.material.map) {
-                        this.floorMesh.material.map.offset.y -= worldMove * 0.1;
+                        this.floorMesh.material.map.offset.y += worldMove * texSpeed;
                     }
                     if (this.ceilingMesh && this.ceilingMesh.material.map) {
-                        this.ceilingMesh.material.map.offset.y -= worldMove * 0.1;
+                        this.ceilingMesh.material.map.offset.y += worldMove * texSpeed;
                     }
 
-                    // Walls: Scroll along length (X axis in UV space for walls rotated Y)
-                    // Need to verify UV orientation. If Mesh created width 120, height 12.
-                    // Usually PlaneGeometry U is width.
+                    // Walls: Scroll along length
                     if (this.wallLeftMesh && this.wallLeftMesh.material.map) {
-                        this.wallLeftMesh.material.map.offset.x -= worldMove * 0.1;
+                        this.wallLeftMesh.material.map.offset.x += worldMove * texSpeed;
                     }
                     if (this.wallRightMesh && this.wallRightMesh.material.map) {
-                        this.wallRightMesh.material.map.offset.x += worldMove * 0.1; // Reverse for right wall?
+                        this.wallRightMesh.material.map.offset.x -= worldMove * texSpeed;
                     }
 
                     // Move Trees (Physical Objects)
                     if (this.trees) {
                         this.trees.forEach(tree => {
-                            tree.position.z += worldMove;
+                            tree.position.z += worldMove; // Trees move +Z (towards camera)
                             if (tree.position.z > 10) {
                                 tree.position.z = -90; // Respawn further back
                             }
