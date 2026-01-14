@@ -2794,39 +2794,63 @@
 
                 // 보스 스테이지 확인
                 const isBoss = this.isBossStage;
-                const bossMult = isBoss ? 3 : 1; // 보스는 3배 강함
 
                 // 몬스터 선택 (보스면 마지막 몬스터, 아니면 랜덤)
                 const ml = this.r ? this.r.monsters : null;
                 if (!ml || ml.length === 0) { return; }
-                const b = isBoss ? ml[ml.length - 1] : ml[Math.floor(Math.random() * (ml.length - 1))];
 
-                // 스케일링: 지수 성장 (1.05^stage) - 약 100스테이지에서 130배
-                const m = Math.pow(1.05, this.stage - 1) * bossMult;
+                // 20-Stage Rotation System
+                // Use (stage-1) % 20 so it cycles every 20 monsters.
+                // Extended to 200 stages: 10 cycles.
+                const mlLength = ml.length; // Should be 20+
+                const cycle = Math.floor((this.stage - 1) / 20);
+                const mapIdx = (this.stage - 1) % 20;
+
+                // Ensure we don't go out of bounds if JSON has fewer monsters than 20
+                // If ml has 20 monsters, mapIdx 0..19 works.
+                // If ml has >20, we only use first 20 for this rotation logic as per request.
+                // Or if ml has <20, use modulo length.
+                const effectiveIdx = mapIdx % mlLength;
+                const b = ml[effectiveIdx];
+
+                // Balance Formula
+                const BASE_HP = 100;
+                const BASE_ATK = 5;
+                const BASE_GOLD = 20;
+                const BASE_EXP = 15;
+
+                // Multipliers
+                const sMult = Math.pow(2.1, this.stage - 1);
+                const wMult = Math.pow(1.1, (this.currentWave || 1) - 1);
+
+                const totalMult = sMult * wMult;
+
+                const bossBuff = isBoss ? 5 : 1;
 
                 this.e = {
-                    name: isBoss ? `👑 ${b.name} (보스)` : b.name,
+                    name: b.name,
                     isBoss: isBoss,
-                    maxHp: Math.floor(b.hp * m),
-                    hp: Math.floor(b.hp * m),
-                    atk: Math.floor(b.atk * m),
-                    def: Math.floor((b.def || 0) * m * 0.5),
+                    maxHp: Math.floor(BASE_HP * totalMult * bossBuff),
+                    hp: Math.floor(BASE_HP * totalMult * bossBuff),
+                    atk: Math.floor(BASE_ATK * totalMult * bossBuff),
+                    def: Math.floor((b.def || 0) + (this.stage * 2)),
                     aspd: b.aspd || 1.0,
-                    exp: Math.floor((b.exp || 10) * m * (isBoss ? 5 : 1)),
-                    gold: Math.floor((b.gold || 15) * m * (isBoss ? 5 : 1)),
-                    icon: b.icon
+                    exp: Math.floor(BASE_EXP * totalMult * bossBuff),
+                    gold: Math.floor(BASE_GOLD * totalMult * bossBuff),
+                    icon: b.icon,
+                    // Store cycle for visual handling
+                    cycle: cycle
                 };
 
                 // Track current enemy for stage bar display
                 this.currentEnemy = this.e;
-                this.updateStageDisplay(); // Update stage bar with new enemy info
+                this.updateStageDisplay();
 
                 // UI 업데이트
                 const em = document.getElementById('enemy-emoji');
                 const im = document.getElementById('enemy-img');
                 const ec = document.getElementById('enemy-container');
 
-                // Fix: Center items perfectly using Flexbox (override block)
                 ec.style.display = 'flex';
 
                 const isImage = this.e.icon.indexOf('http') === 0 || this.e.icon.indexOf('data:') === 0 || this.e.icon.indexOf('assets/') === 0;
@@ -2837,9 +2861,14 @@
 
                     // 보스면 1.5배 크게 표시
                     im.style.transform = isBoss ? 'scale(1.5)' : 'scale(1)';
-                    im.style.filter = isBoss ? 'drop-shadow(0 0 30px gold)' : 'drop-shadow(0 0 20px rgba(255,0,0,0.5))';
 
-                    // Fix: Reset Animation for Zoom-in effect
+                    // Visual Variation: Hue Rotate based on cycle
+                    // Cycle 0: 0deg, Cycle 1: 45deg, ...
+                    const hueVal = (this.e.cycle * 45) % 360;
+                    const filterStyle = isBoss ? `drop-shadow(0 0 30px gold) hue-rotate(${hueVal}deg)` : `drop-shadow(0 0 20px rgba(255,0,0,0.5)) hue-rotate(${hueVal}deg)`;
+                    im.style.filter = filterStyle;
+
+                    // Reset Animation
                     im.style.animation = 'none';
                     im.offsetHeight; /* trigger reflow */
                     im.style.animation = 'enemyApproach 0.5s ease-out forwards';
@@ -2847,6 +2876,8 @@
                     im.style.display = 'none';
                     em.style.display = 'block';
                     em.innerText = this.e.icon;
+                    // Apply hue filter to emoji too? No, usually not possible easily or looks weird.
+                    // Assuming images for most monsters.
                 }
 
                 document.getElementById('hud-name').innerText = this.e.name;
