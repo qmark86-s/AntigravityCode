@@ -2,87 +2,127 @@ $ErrorActionPreference = "Stop"
 $baseDir = "C:\Users\idopa\.gemini\antigravity\scratch\weapon-master"
 $htmlFile = Join-Path $baseDir "index.html"
 $outputFile = Join-Path $baseDir "weapon-master-bundled.html"
-$dataDir = Join-Path $baseDir "data"
-$assetsDir = Join-Path $baseDir "assets"
 
-Write-Host "Reading HTML..."
+Write-Host "Reading HTML from $htmlFile..."
 $htmlContent = Get-Content $htmlFile -Raw -Encoding UTF8
 
-Write-Host "Reading JSON data..."
-$monstersPath = Join-Path $dataDir "monsters.json"
-$weaponsPath = Join-Path $dataDir "weapons.json"
-$configPath = Join-Path $dataDir "config.json"
+# 1. Inline Scripts
+Write-Host "Inlining scripts..."
+$scriptRegex = '<script src="js/(.+?)"></script>'
+$scriptMatches = [regex]::Matches($htmlContent, $scriptRegex)
 
-# JSON 파일 내용을 문자열로 읽음 (객체로 변환 후 다시 직렬화는 포맷 변경 우려가 있어서, 문자열 조작으로 처리 시도)
-# 하지만 병합을 위해 객체로 변환 필요
-$monsters = Get-Content $monstersPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$weaponsData = Get-Content $weaponsPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$configData = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-
-# 통합 데이터 객체 생성
-$gameData = @{
-    monsters = $monsters
-    weapons = $weaponsData.weapons
-    grades = $weaponsData.grades
-    gacha = $weaponsData.gacha
+foreach ($match in $scriptMatches) {
+    $fileName = $match.Groups[1].Value
+    # Fix for nested Join-Path in one line or separate
+    $jsDir = Join-Path $baseDir "js"
+    $filePath = Join-Path $jsDir $fileName
+    
+    if (Test-Path $filePath) {
+        Write-Host "  Inlining $fileName..."
+        $scriptContent = Get-Content $filePath -Raw -Encoding UTF8
+        $htmlContent = $htmlContent.Replace($match.Value, "<script>`n$scriptContent`n</script>")
+    }
+    else {
+        Write-Warning "  Script file not found: $fileName"
+    }
 }
-# hashtable에 config 병합은 복잡하므로 여기선 생략하고, 어차피 fetch.then으로 합쳐지던 로직을 시뮬레이션
 
-# JSON 문자열로 변환 (Depth 충분히)
-# -Compress 옵션으로 용량 절약
-$jsonStr = $gameData | ConvertTo-Json -Depth 20 -Compress
+# 2. Prepare Data
+Write-Host "Preparing Data..."
+$dataDir = Join-Path $baseDir "data"
+$dataFiles = @{
+    "data/monsters.json" = Join-Path $dataDir "monsters.json"
+    "data/weapons.json"  = Join-Path $dataDir "weapons.json"
+    "data/config.json"   = Join-Path $dataDir "config.json"
+}
 
-Write-Host "Encoding assets..."
-$files = Get-ChildItem -Path $assetsDir -Recurse -Include *.png, *.jpg, *.jpeg, *.gif
+$bundledData = @{}
 
-foreach ($file in $files) {
-    # 상대 경로 계산 (슬래시로 변환)
+foreach ($key in $dataFiles.Keys) {
+    $path = $dataFiles[$key]
+    if (Test-Path $path) {
+        Write-Host "  Loading $key..."
+        $jsonContent = Get-Content $path -Raw -Encoding UTF8
+        $bundledData[$key] = $jsonContent
+    }
+}
+
+# 3. Base64 Encode Assets
+Write-Host "Encoding Assets..."
+$assetsDir = Join-Path $baseDir "assets"
+$assetFiles = Get-ChildItem -Path $assetsDir -Recurse -Include *.png, *.jpg, *.jpeg, *.gif, *.glb
+
+$finalJsonObj = @{}
+foreach ($key in $bundledData.Keys) {
+    try {
+        $finalJsonObj[$key] = $bundledData[$key] | ConvertFrom-Json
+        # Data Validation
+        if ($key -eq "data/monsters.json" -and $null -eq $finalJsonObj[$key].monsters) {
+            Write-Warning "  Warning: monsters.json missing 'monsters' array property!"
+        }
+    }
+    catch {
+        Write-Warning "  Failed to parse JSON for $key"
+    }
+}
+
+$jsonStr = $finalJsonObj | ConvertTo-Json -Depth 20 -Compress
+
+foreach ($file in $assetFiles) {
     $relPath = $file.FullName.Substring($baseDir.Length + 1).Replace("\", "/")
     
-    # JSON 문자열에 해당 경로가 있는지 확인 (성능 최적화)
     if ($jsonStr.Contains($relPath)) {
-        Write-Host "  Replacing $relPath ..."
-        
-        # Base64 인코딩
+        Write-Host "  Bundling $relPath..."
         $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
         $b64 = [System.Convert]::ToBase64String($bytes)
         $ext = $file.Extension.TrimStart(".")
-        $dataUri = "data:image/$ext;base64,$b64"
         
-        # 문자열 치환
+        $mime = "image/$ext"
+        if ($ext -eq "svg") { $mime = "image/svg+xml" }
+        if ($ext -eq "glb") { $mime = "model/gltf-binary" }
+        if ($ext -eq "jpg") { $mime = "image/jpeg" }
+        
+        $dataUri = "data:$mime;base64,$b64"
         $jsonStr = $jsonStr.Replace($relPath, $dataUri)
     }
 }
 
-Write-Host "Injecting into HTML..."
-# 데이터 주입 코드 생성
-# JSON 내에 $ 기호가 있으면 PowerShell 문자열 보간에서 문제될 수 있으므로 단일 따옴표 사용하거나 이스케이프 필요하지만,
-# 여기선 변수에 담아두고 replace 메서드 사용하므로 괜찮음.
+# 4. Inject Data and Patch Logic
+Write-Host "Injecting Data and Patching HTML..."
 
-$bundledScript = "<script>`nconst BUNDLED_GAME_DATA = $jsonStr;`n"
-$htmlContent = $htmlContent.Replace("<script>", $bundledScript)
+$injection = "<script>const BUNDLED_GAME_DATA = $jsonStr;</script>"
+$htmlContent = $htmlContent.Replace("</title>", "</title>`n$injection")
 
-# fetch 로직 교체
-# 정규식 패턴: Promise.all([...])...catch(...)
-# Powershell -replace는 정규식 지원
+# Patch DataLoader.loadJSON
+$patchSearch = "async loadJSON(path) {"
+$patchReplace = "async loadJSON(path) { if (typeof BUNDLED_GAME_DATA !== 'undefined' && BUNDLED_GAME_DATA[path]) { return BUNDLED_GAME_DATA[path]; }"
 
-# 패턴: Promise\.all\(\s*\[[\s\S]*?\]\)[\s\S]*?\.catch\(err => initGame\(FALLBACK_DATA\)\);
-# Powershell 정규식은 라인 단위가 기본일 수 있으므로 (?s) 옵션 필요 (SingleLine 모드)
-
-$pattern = "(?s)Promise\.all\(\s*\[.*?\]\).*?\.catch\(err => initGame\(FALLBACK_DATA\)\);"
-$replacement = "initGame(BUNDLED_GAME_DATA);"
-
-if ($htmlContent -match $pattern) {
-    Write-Host "  Found fetch block, replacing..."
-    $htmlContent = $htmlContent -replace $pattern, $replacement
-} else {
-    Write-Host "  WARNING: Fetch block not found. Appending override."
-    # window.onload 재정의
-    $override = "`n<script>window.onload = function() { initGame(BUNDLED_GAME_DATA); };</script>"
-    $htmlContent = $htmlContent + $override
+if ($htmlContent.Contains($patchSearch)) {
+    $htmlContent = $htmlContent.Replace($patchSearch, $patchReplace)
+    Write-Host "  DataLoader patched."
+}
+else {
+    Write-Warning "  Could not find DataLoader.loadJSON signature to patch!"
 }
 
+# Patch Robustness: Ensure we validate data before using it, preventing crashes on empty objects
+# Original: const jsonLoaded = monstersData && weaponsData;
+# New: const jsonLoaded = monstersData && monstersData.monsters && weaponsData && weaponsData.weapons;
+
+$robustSearch = "const jsonLoaded = monstersData && weaponsData;"
+$robustReplace = "const jsonLoaded = monstersData && monstersData.monsters && weaponsData && weaponsData.weapons;"
+
+if ($htmlContent.Contains($robustSearch)) {
+    $htmlContent = $htmlContent.Replace($robustSearch, $robustReplace)
+    Write-Host "  Robustness check patched."
+}
+else {
+    # Try finding with whitespace just in case
+    Write-Warning "  Could not patch jsonLoaded check. Searching fuzzier..."
+}
+
+# 5. Save
 Write-Host "Saving to $outputFile..."
 $htmlContent | Set-Content -Path $outputFile -Encoding UTF8
 
-Write-Host "Done!"
+Write-Host "Bundle Complete!"

@@ -3,15 +3,68 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weapon Master v2.2</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
     <script src="js/three.min.js"></script>
     <script src="js/GLTFLoader.js"></script>
     <script src="js/game_assets.js"></script>
     <style>
+        /* CSS Variables for Design System */
+        :root {
+            /* Typography */
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Noto Sans KR', 'Segoe UI', sans-serif;
+            --font-numbers: 'Rajdhani', sans-serif;
+
+            /* Primary Colors */
+            --color-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --color-primary-solid: #667eea;
+            --color-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --color-secondary-solid: #f093fb;
+
+            /* Status Colors */
+            --color-success: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+            --color-success-solid: #0ba360;
+            --color-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --color-danger-solid: #fa709a;
+            --color-gold: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
+            --color-gold-solid: #f9d423;
+
+            /* UI Colors */
+            --color-bg-dark: #0a0a0a;
+            --color-bg-card: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --color-border: rgba(255, 255, 255, 0.1);
+            --color-border-hover: rgba(255, 255, 255, 0.3);
+
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-blur: blur(10px);
+
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.5);
+
+            /* Transitions */
+            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body {
-            background: #0a0a0a;
+            background: var(--color-bg-dark);
             color: #fff;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: var(--font-body);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -58,6 +111,48 @@
             /* box-shadow: 0 0 30px #000; Keep shadow */
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             border-radius: 8px;
+            max-width: 90vw;
+        }
+
+        /* Responsive Layout - Tablet & Mobile */
+        @media (max-width: 900px) {
+            #game-container {
+                width: 90vw;
+                height: calc(90vw * 0.625);
+            }
+
+            #ui-panel {
+                width: 90vw;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            #game-container {
+                width: 95vw;
+                height: calc(95vw * 0.7);
+                border-width: 2px;
+            }
+
+            #ui-panel {
+                width: 95vw;
+                padding: 8px 10px;
+            }
+
+            .btn-small {
+                padding: 6px 10px;
+                font-size: 12px;
+                margin: 0 2px;
+            }
+
+            .shop-window,
+            .stat-window {
+                width: 90vw !important;
+                max-width: 400px;
+            }
         }
 
         #game-canvas {
@@ -101,6 +196,119 @@
             transform: translateY(-50%) scale(1.1);
         }
 
+        /* Hide ally buttons when overlays are open */
+        #shop-overlay:not([style*="display: none"])~#game-container .ally-btn,
+        #gacha-overlay:not([style*="display: none"])~#game-container .ally-btn,
+        #stat-overlay:not([style*="display: none"])~#game-container .ally-btn,
+        #inventory-overlay:not([style*="display: none"])~#game-container .ally-btn,
+        #settings-overlay:not([style*="display: none"])~#game-container .ally-btn,
+        #smith-overlay:not([style*="display: none"])~#game-container .ally-btn {
+            display: none !important;
+        }
+
+        /* Stage Display Bar */
+        #stage-display-bar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            /* Increased to ensure always on top */
+            background: linear-gradient(135deg, rgba(46, 49, 65, 0.95), rgba(30, 33, 48, 0.95));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            padding: 12px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(124, 77, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: var(--font-heading);
+            transition: all 0.3s ease;
+        }
+
+        #stage-display-bar.boss-stage {
+            border-color: rgba(255, 77, 77, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(255, 77, 77, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: bossPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes bossPulse {
+
+            0%,
+            100% {
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.02);
+            }
+        }
+
+        .stage-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .stage-info-item .stage-icon {
+            font-size: 20px;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .stage-info-item .stage-value {
+            background: linear-gradient(135deg, var(--gradient-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stage-info-item.world-info .stage-value {
+            background: linear-gradient(135deg, #00d4ff, #7c4dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stage-info-item.boss-indicator {
+            background: linear-gradient(135deg, #ff4d4d, #ff9800);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.6);
+            animation: bossGlow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes bossGlow {
+            from {
+                box-shadow: 0 0 20px rgba(255, 77, 77, 0.6);
+            }
+
+            to {
+                box-shadow: 0 0 30px rgba(255, 77, 77, 1);
+            }
+        }
+
+        .stage-separator {
+            width: 2px;
+            height: 20px;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
         /* Slot Selection Screen */
         #slot-select-screen {
             position: absolute;
@@ -141,6 +349,32 @@
             border-color: #fff;
             transform: scale(1.05);
             background: #333;
+        }
+
+        .ally-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid #7f8c8d;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 900;
+            color: white;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .ally-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+            background: rgba(0, 0, 0, 0.8);
+            border-color: white;
         }
 
         /* Unified Slot Card Style (Matches save-slot but more flexible) */
@@ -470,6 +704,17 @@
             font-weight: bold;
         }
 
+        /* Shimmer animation for HP bars */
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
         #hp-bar-enemy {
             width: 200px;
             height: 12px;
@@ -482,8 +727,22 @@
         #hp-fill-enemy {
             height: 100%;
             width: 100%;
-            background: linear-gradient(90deg, #e74c3c, #c0392b);
-            transition: width 0.2s;
+            background: var(--color-danger);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(250, 112, 154, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hp-fill-enemy::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
         }
 
         /* 1인칭 손 - 화면 최전방 */
@@ -534,32 +793,68 @@
         #ui-panel {
             width: 800px;
             padding: 10px 15px;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border: 2px solid #333;
-            border-radius: 8px;
+            background: var(--color-bg-card);
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
             align-items: center;
             box-sizing: border-box;
+            box-shadow: var(--shadow-md);
         }
 
         .btn-small {
             padding: 8px 15px;
-            background: #2c3e50;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             color: white;
-            border: none;
+            border: 1px solid var(--glass-border);
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 0 3px;
-            transition: 0.2s;
+            font-family: var(--font-body);
+            font-weight: 500;
+            transition: all var(--transition-base);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-small::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left var(--transition-slow);
         }
 
         .btn-small:hover {
-            background: #34495e;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--color-border-hover);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-small:hover::before {
+            left: 100%;
+        }
+
+        .btn-small:active {
+            transform: translateY(0);
         }
 
         .gold-txt {
-            color: #f1c40f;
+            background: var(--color-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-weight: bold;
             font-size: 18px;
+            font-family: var(--font-numbers);
+            text-shadow: 0 0 20px rgba(249, 212, 35, 0.5);
+            filter: drop-shadow(0 0 10px rgba(249, 212, 35, 0.3));
         }
 
         #shop-overlay {
@@ -568,7 +863,9 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 2000;
             display: none;
             flex-direction: column;
@@ -578,27 +875,63 @@
         }
 
         .shop-window {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 25px;
-            border-radius: 15px;
-            border: 2px solid #0f3460;
+            background: linear-gradient(145deg, #1a1a2e, #16213e) padding-box,
+                var(--color-primary) border-box;
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid transparent;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+            position: relative;
+        }
+
+        .shop-window h2 {
+            font-family: var(--font-heading);
+            color: transparent;
+            background: var(--color-gold);
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(249, 212, 35, 0.5);
+            font-weight: 900;
+            letter-spacing: 2px;
         }
 
         .shop-item {
             display: flex;
             justify-content: space-between;
-            padding: 12px;
-            margin: 8px 0;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
             cursor: pointer;
-            transition: 0.2s;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+            transition: left var(--transition-slow);
         }
 
         .shop-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(102, 126, 234, 0.15);
+            border-color: var(--color-primary-solid);
+            transform: translateX(5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .shop-item:hover::before {
+            left: 100%;
         }
 
         #stat-overlay {
@@ -607,7 +940,9 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 2000;
             display: none;
             flex-direction: column;
@@ -617,13 +952,21 @@
         }
 
         .stat-window {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 25px;
-            border-radius: 15px;
-            border: 2px solid #0f3460;
-            width: 400px;
+            background: linear-gradient(145deg, #1a1a2e, #16213e) padding-box,
+                var(--color-secondary) border-box;
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            width: 500px;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-lg), 0 0 20px rgba(240, 147, 251, 0.3);
+        }
+
+        .stat-window h2 {
+            font-family: var(--font-heading);
+            font-weight: 900;
+            letter-spacing: 2px;
         }
 
         #gacha-overlay {
@@ -948,18 +1291,23 @@
         }
 
         .stat-btn-add {
-            background: #27ae60;
+            background: var(--color-success);
             color: white;
+            box-shadow: 0 4px 12px rgba(11, 163, 96, 0.4);
         }
 
         .stat-btn-add:hover {
-            background: #2ecc71;
-            transform: scale(1.1);
+            background: var(--color-success);
+            transform: scale(1.15);
+            box-shadow: 0 6px 20px rgba(11, 163, 96, 0.6);
         }
 
         .stat-btn-add:disabled {
             background: #555;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.5;
         }
 
         .btn-reset-stats {
@@ -1228,7 +1576,11 @@
         </div>
 
         <!-- Slot Selection Screen -->
-        <div id="slot-select-screen">
+        <!-- Slot Selection Screen -->
+        <!-- Slot Selection Screen -->
+        <div id="slot-select-screen" style="display:flex;">
+            <button class="btn-close-slot" onclick="game.closeSlotScreen()"
+                style="position: absolute; top: 20px; right: 20px; font-size: 24px; background: transparent; border: none; color: white; cursor: pointer;">✕</button>
             <h1>Select Save Slot</h1>
             <div class="slot-container">
                 <div id="slot-1-card"></div>
@@ -1237,11 +1589,24 @@
             </div>
         </div>
 
+        <!-- Persistent Stage Display Bar with Wave and Monster Info -->
+        <div id="stage-display-bar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 18px;">⚔️</span>
+                <span id="stage-display-text" style="font-weight: 600; font-size: 16px;">STAGE 1-1</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="stage-wave-info"
+                    style="font-weight: 500; font-size: 14px; color: rgba(255, 255, 255, 0.9);">Wave 1/10</span>
+                <span style="color: rgba(255, 255, 255, 0.5);">•</span>
+                <span id="stage-monster-name" style="font-weight: 500; font-size: 14px; color: #FFD700;">슬라임</span>
+            </div>
+        </div>
         <!-- Party Slots (UI Buttons) -->
         <div id="ally-slot-left" class="ally-btn" style="left: 20px;"></div>
         <div id="ally-slot-right" class="ally-btn" style="right: 20px;"></div>
 
-        <div id="start-screen">
+        <div id="start-screen" style="display:none;">
             <h1 style="font-size:48px;text-shadow:0 0 20px #e74c3c">⚔️ Weapon Master</h1>
             <p style="color:#888">v2.3 - 3D Resources</p>
             <button class="big-btn" onclick="game.start()">🎮 모험 시작</button>
@@ -1275,9 +1640,7 @@
                 <h2>💾 캐릭터 슬롯</h2>
                 <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
                 <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
-                    <button class="btn-save" onclick="game.switchSlot(1)" style="flex:1;">Slot 1</button>
-                    <button class="btn-save" onclick="game.switchSlot(2)" style="flex:1;">Slot 2</button>
-                    <button class="btn-save" onclick="game.switchSlot(3)" style="flex:1;">Slot 3</button>
+                    <!-- JS populated via game.updateSettingsSlotUI -->
                 </div>
             </div>
 
@@ -1340,8 +1703,8 @@
 
                 <!-- 능력치 탭 -->
                 <div id="shop-items-tab">
-                    <div class="shop-item" onclick="game.buy('potion')"><span>💖 회복</span><span
-                            id="shop-cost-potion">50G</span></div>
+                    <div class="shop-item" onclick="game.buy('hpBoost')"><span>❤️ 최대체력 +25</span><span
+                            id="shop-cost-hpBoost">100G</span></div>
                     <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span
                             id="shop-cost-atk">100G</span></div>
                     <div class="shop-item" onclick="game.buy('aspd')"><span>⚡ 공격속도 +0.1</span><span
@@ -1785,10 +2148,12 @@
                 { id: 7, name: "드래곤", hp: 200, atk: 30, def: 12, aspd: 0.6, exp: 150, gold: 150, icon: "assets/monsters/dragon.png" }
             ],
             backgrounds: [
-                { id: 0, name: "벽", val: "assets/textures/wall.png" },
-                { id: 1, name: "바닥", val: "assets/textures/floor.png" },
                 { id: 2, name: "천장", val: "#050505" }
-            ]
+            ],
+            gameSettings: {
+                themeChangeInterval: 1,
+                battleDelayMultiplier: 0.5
+            }
         };
 
         // 데이터 로더
@@ -1859,81 +2224,8 @@
                     document.getElementById('opt-dmgtext').checked = game.showDamageText;
 
                     // Slot Switcher UI
-                    const container = document.querySelector('#settings-overlay .overlay-content');
-                    if (container) {
-                        // Check or Create Slot Switcher Container
-                        let slotDiv = document.getElementById('settings-slot-switcher');
-                        if (!slotDiv) {
-                            slotDiv = document.createElement('div');
-                            slotDiv.id = 'settings-slot-switcher';
-                            slotDiv.style.marginTop = '15px';
-                            slotDiv.style.borderTop = '1px solid #444';
-                            slotDiv.style.paddingTop = '10px';
-                            slotDiv.innerHTML = '<div class="res-label">캐릭터 슬롯 변경</div><div id="settings-slots" style="display:flex;gap:5px;"></div>';
-
-                            // Insert before "Go to Title" or Close
-                            const closeBtn = container.querySelector('button[onclick*="close"]');
-                            if (closeBtn) container.insertBefore(slotDiv, closeBtn);
-                            else container.appendChild(slotDiv);
-                        }
-
-                        // Render Slots
-                        const slotContainer = document.getElementById('settings-slots');
-                        slotContainer.innerHTML = '';
-
-                        for (let i = 1; i <= 3; i++) {
-                            const btn = document.createElement('button');
-                            btn.className = 'btn-save';
-                            btn.style.flex = '1';
-                            btn.style.fontSize = '12px';
-                            btn.style.padding = '5px';
-
-                            const isUnlocked = SharedData.isSlotUnlocked(i);
-                            const isActive = game.slotId === i;
-
-                            if (isActive) {
-                                btn.innerText = `Slot ${i} (On)`;
-                                btn.disabled = true;
-                                btn.style.background = '#27ae60';
-                                btn.style.opacity = '0.7';
-                            } else if (!isUnlocked) {
-                                btn.innerText = `🔒 Slot ${i}`;
-                                btn.style.background = '#333';
-                                btn.style.color = '#777';
-                                btn.onclick = () => game.log(`🔒 슬롯 ${i}은(는) 잠겨있습니다.`);
-                            } else {
-                                btn.innerText = `Slot ${i}`;
-                                btn.onclick = async () => {
-                                    // Close settings first to avoid overlap issues? No, usually modal on top is fine.
-                                    // Using game.showConfirmModal
-                                    if (await game.showConfirmModal('슬롯 변경', `현재 진행상황을 저장하고\n슬롯 ${i}(으)로 변경하시겠습니까?`)) {
-                                        settings.close();
-                                        game.switchSlot(i);
-                                    }
-                                };
-                            }
-                            slotContainer.appendChild(btn);
-                        }
-                    }
-                    // Add "Go to Title" button if not exists
-                    const container2 = document.querySelector('#settings-overlay .overlay-content');
-                    if (container2 && !document.getElementById('btn-go-title')) {
-                        const btn = document.createElement('button');
-                        btn.id = 'btn-go-title';
-                        btn.className = 'btn-save';
-                        btn.style.marginTop = '10px';
-                        btn.style.background = '#8e44ad';
-                        btn.innerText = '🏠 타이틀 화면으로 (슬롯 선택)';
-                        btn.onclick = async () => {
-                            if (await game.showConfirmModal('타이틀로 이동', '저장 후 타이틀 화면으로 이동하시겠습니까?')) {
-                                game.saveProgress();
-                                location.reload();
-                            }
-                        };
-                        // Insert before the Close button (usually last)
-                        const closeBtn = container2.querySelector('button[onclick*="close"]');
-                        if (closeBtn) container2.insertBefore(btn, closeBtn);
-                        else container2.appendChild(btn);
+                    if (game && game.updateSettingsSlotUI) {
+                        game.updateSettingsSlotUI();
                     }
                 }
             },
@@ -2051,6 +2343,11 @@
                 this.autoSave = true;
                 this.showDamageText = true;
 
+                // Wave system (10 waves per stage)
+                this.wave = 1;
+                this.maxWaves = 10;
+                this.currentEnemy = null; // Track current enemy for display
+
                 // 월드 & 보스 시스템
                 this.stagesPerWorld = 100;
                 this.bossInterval = 10;
@@ -2085,11 +2382,18 @@
                 }
             }
 
-            getSlotCardHTML(id) {
+            closeSlotScreen() {
+                const screen = document.getElementById('slot-select-screen');
+                const startScreen = document.getElementById('start-screen');
+                if (screen) screen.style.display = 'none';
+                if (startScreen) startScreen.style.display = 'flex';
+            }
+
+            getSlotCardHTML(id, isSettings = false) {
                 const isUnlocked = SharedData.isSlotUnlocked(id);
                 if (!isUnlocked) {
                     return `
-                        <div class="slot-card locked" onclick="game.selectSlot(${id})">
+                        <div class="slot-card locked" onclick="game.selectSlot(${id}, ${isSettings})">
                             <div class="slot-icon">🔒</div>
                             <div class="slot-title">Slot ${id}</div>
                             <div class="slot-status">Locked</div>
@@ -2110,7 +2414,7 @@
                         const activeStyle = isActive ? 'border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71;' : '';
 
                         return `
-                            <div class="slot-card" style="${activeStyle}" onclick="game.selectSlot(${id}, true)">
+                            <div class="slot-card" style="${activeStyle}" onclick="game.selectSlot(${id}, ${isSettings})">
                                 <div class="slot-header">
                                     <span class="slot-lv">Lv.${parsed.p.lv}</span>
                                     <span class="slot-title">Slot ${id}</span>
@@ -2123,7 +2427,7 @@
                     } catch (e) { return `<div class="slot-card error">Corrupted</div>`; }
                 } else {
                     return `
-                        <div class="slot-card empty" onclick="game.selectSlot(${id})">
+                        <div class="slot-card empty" onclick="game.selectSlot(${id}, ${isSettings})">
                             <div class="slot-icon">➕</div>
                             <div class="slot-title">Slot ${id}</div>
                             <div class="slot-status">New Game</div>
@@ -2163,8 +2467,10 @@
 
                 this.slotId = id;
                 document.getElementById('slot-select-screen').style.display = 'none';
-                document.getElementById('start-screen').style.display = 'flex';
+                // Direct Entry: Bypass Start Screen
+                // document.getElementById('start-screen').style.display = 'flex';
                 this.load();
+                this.start();
             }
 
             updateSettingsSlotUI() {
@@ -2177,10 +2483,8 @@
 
                 for (let i = 1; i <= 3; i++) {
                     const div = document.createElement('div');
-                    // We reuse getSlotCardHTML but need to ensure onclick works naturally
-                    // logic handles forceLoad=true via direct call in HTML string above?
-                    // Wait, string above uses game.selectSlot(id, true). Correct.
-                    div.innerHTML = this.getSlotCardHTML(i);
+                    // Pass true for isSettings to enable switch behavior
+                    div.innerHTML = this.getSlotCardHTML(i, true);
                     container.appendChild(div.firstElementChild); // Extract from wrapper
                 }
             }
@@ -2201,6 +2505,11 @@
                 this.state = 'IDLE';
 
                 this.log(`🔄 슬롯 ${id}로 변경되었습니다.`);
+
+                // UX: Close settings/slots after switch so user is in game
+                if (settings && settings.close) settings.close();
+                this.closeSlotScreen();
+
                 this.walk();
             }
 
@@ -2220,6 +2529,8 @@
                     el.style.display = 'none';
                     return;
                 }
+
+                // Ensure default display is flex if not hidden
                 el.style.display = 'flex';
 
                 const allyIdx = this.allies.findIndex(a => a.slotId === targetSlotId);
@@ -2270,10 +2581,13 @@
                         critRate: data.p.critRate || 5,
                         critDmg: data.p.critDmg || 150,
                         weapon: data.p.equippedWeapon || null,
+                        wIdx: data.p.wIdx || 0,
                         lastAttack: 0
                     };
                     this.allies.push(ally);
                     this.log(`🙌 Slot ${targetSlotId} Joined the party!`);
+                    console.log(`[SummonAlly] Slot ${targetSlotId} Data:`, data.p);
+                    console.log(`[SummonAlly] Ally Object created:`, ally);
 
                     if (window.game3d) window.game3d.addAlly(ally);
                     this.renderPartyUI();
@@ -2314,8 +2628,42 @@
 
             // 현재 월드 테마
             get currentTheme() {
-                const idx = (this.currentWorld - 1) % this.worldThemes.length;
+                const interval = (this.r.gameSettings && this.r.gameSettings.themeChangeInterval) ? this.r.gameSettings.themeChangeInterval : 100;
+                const idx = Math.floor((this.stage - 1) / interval) % this.worldThemes.length;
                 return this.worldThemes[idx];
+            }
+
+            // Update Stage Display Bar UI
+            updateStageDisplay() {
+                const stageDisplayText = document.getElementById('stage-display-text');
+                const stageWaveInfo = document.getElementById('stage-wave-info');
+                const stageMonsterName = document.getElementById('stage-monster-name');
+                const stageBarEl = document.getElementById('stage-display-bar');
+
+                // Update stage number with boss indicator
+                if (stageDisplayText) {
+                    const stageText = `STAGE ${this.stage}${this.isBossStage ? ' 👑 BOSS' : ''}`;
+                    stageDisplayText.textContent = stageText;
+                }
+
+                // Update wave info (always show current wave)
+                if (stageWaveInfo) {
+                    stageWaveInfo.textContent = `Wave ${this.wave}/10`;
+                }
+
+                // Update monster name (show current enemy name)
+                if (stageMonsterName && this.currentEnemy) {
+                    stageMonsterName.textContent = this.currentEnemy.name || '???';
+                }
+
+                // Add boss styling
+                if (stageBarEl) {
+                    if (this.isBossStage) {
+                        stageBarEl.classList.add('boss-stage');
+                    } else {
+                        stageBarEl.classList.remove('boss-stage');
+                    }
+                }
             }
 
             // 배속 계산: 다이아 배속 × (1 + 골드 보너스)
@@ -2327,16 +2675,62 @@
                 const diamondMult = [1, 1.5, 2.0][this.p.speedDiamondTier] || 1;
                 const goldBonus = this.p.speedGoldLevel * 0.05; // 0 ~ 0.25
                 return diamondMult * (1 + goldBonus);
-                return diamondMult * (1 + goldBonus);
+            }
+
+            getStageTheme(stage) {
+                // Configurable interval (Default: 10)
+                const config = (settings.data && settings.data.config && settings.data.config.gameSettings) || {};
+                const interval = config.themeChangeInterval || 10;
+
+                // Helper to get theme by index
+                // 0: Grass, 1: Cave, 2: Snow, 3: Village, 4: Castle
+                const themeList = ['grass', 'cave', 'snow', 'village', 'castle'];
+
+                // Calculate theme index based on interval
+                // e.g. interval 10: 1-10 -> 0, 11-20 -> 1
+                // e.g. interval 1: 1 -> 0, 2 -> 1, ... 5 -> 4, 6 -> 0 (cycle?) or 5 -> 4 (clamp?)
+                // Request implied specific ranges for 10. For 1, let's Cycle them.
+
+                let idx = Math.floor((stage - 1) / interval);
+
+                // If interval is 1, we simply cycle through 5 themes? 
+                // "1~10 Grass, 11~20 Cave" structure implies sequential progression.
+                // If interval is 1, then Stage 1=Grass, Stage 2=Cave, Stage 3=Snow...
+                // This seems to be the intent for "Testing".
+
+                // Safe Modulo to cycle if it goes beyond defined themes
+                idx = idx % themeList.length;
+
+                const themeKey = themeList[idx];
+
+                // Use data from settings if available (supports bundling)
+                if (this.r && this.r.stageThemes && this.r.stageThemes[themeKey]) {
+                    return this.r.stageThemes[themeKey];
+                }
+
+                return {
+                    wall: `assets/textures/theme_${themeKey}_wall.png`,
+                    floor: `assets/textures/theme_${themeKey}_floor.png`,
+                    ceiling: `assets/textures/theme_${themeKey}_ceiling.png`
+                };
             }
 
             reload() {
                 this.r = settings.data;
-                const bg = this.r.backgrounds;
-                this.applyBg('.wall-left', bg[0].val);
-                this.applyBg('.wall-right', bg[0].val);
-                this.applyBg('.floor', bg[1].val);
-                this.applyBg('.ceiling', bg[2].val);
+
+                // Dynamic Background Logic
+                const theme = this.getStageTheme(this.stage || 1);
+
+                this.applyBg('.wall-left', theme.wall);
+                this.applyBg('.wall-right', theme.wall);
+                this.applyBg('.floor', theme.floor);
+                this.applyBg('.ceiling', theme.ceiling);
+
+                // Quality Enhancement: Update 3D Background Theme
+                if (window.game3d) {
+                    window.game3d.updateBackgroundTheme(this.currentTheme.name);
+                }
+
                 this.updateHand();
             }
 
@@ -2354,10 +2748,16 @@
             }
 
             start() {
+                // Ensure ALL overlays are hidden
                 document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('slot-select-screen').style.display = 'none';
+
                 this.state = 'IDLE';
                 this.log("모험 시작!");
+                this.updateStageDisplay(); // Update stage display on start
                 this.walk();
+                this.renderPartyUI(); // Ensure party buttons appear
+                this.startAllyLoop(); // Start Ally Combat Loop
                 this.saveProgress();
             }
 
@@ -2369,22 +2769,24 @@
                 const speed = this.getSpeedMultiplier();
                 const tunnelEl = document.querySelector('.tunnel-container');
                 tunnelEl.classList.add('moving');
-                // 배속에 맞게 배경 애니메이션 속도 조절
-                tunnelEl.style.animationDuration = (0.5 / speed) + 's';
+                // 배속과 무관하게 배경 애니메이션 속도는 고정 (어지러움 방지)
+                tunnelEl.style.animationDuration = '0.5s';
                 document.querySelectorAll('.moving .wall-left, .moving .wall-right, .moving .floor, .moving .ceiling').forEach(el => {
-                    el.style.animationDuration = (0.5 / speed) + 's';
+                    el.style.animationDuration = '0.5s';
                 });
                 document.getElementById('enemy-container').style.display = 'none';
-                setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 2000);
+                // Base delay reduced from 2000ms to 1000ms for faster pacing
+                setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 1000 / speed);
             }
 
             meet() {
                 this.state = 'BATTLE';
                 document.querySelector('.tunnel-container').classList.remove('moving');
 
-                // 월드 테마 적용 (hue-rotate)
-                const theme = this.currentTheme;
-                document.querySelector('.tunnel-container').style.filter = `hue-rotate(${theme.hue}deg)`;
+                // 월드 테마 적용 (hue-rotate) - Removed for textured themes
+                // const theme = this.currentTheme;
+                // document.querySelector('.tunnel-container').style.filter = `hue-rotate(${theme.hue}deg)`;
+                document.querySelector('.tunnel-container').style.filter = 'none';
 
                 // 보스 스테이지 확인
                 const isBoss = this.isBossStage;
@@ -2410,6 +2812,10 @@
                     gold: Math.floor((b.gold || 15) * m * (isBoss ? 5 : 1)),
                     icon: b.icon
                 };
+
+                // Track current enemy for stage bar display
+                this.currentEnemy = this.e;
+                this.updateStageDisplay(); // Update stage bar with new enemy info
 
                 // UI 업데이트
                 const em = document.getElementById('enemy-emoji');
@@ -2464,7 +2870,11 @@
                 // Applying speed to start delay too? Maybe, but animation is fixed 0.5s CSS.
                 // Actually, if 4x speed, we want to start faster.
                 // Let's use 500 / speed.
-                setTimeout(() => this.round(), 500 / speed);
+                // Start Battle Loop after animation (500ms * delayMult)
+                const config = (settings.data && settings.data.config && settings.data.config.gameSettings) || {};
+                const delayMult = config.battleDelayMultiplier || 1.0;
+
+                setTimeout(() => this.round(), (500 * delayMult) / speed);
             }
 
             battleLoop() {
@@ -2472,6 +2882,18 @@
                 if (this.state.trim() !== 'BATTLE') return;
                 // Start the round immediately
                 this.round();
+            }
+
+            startAllyLoop() {
+                if (this.allyLoopId) cancelAnimationFrame(this.allyLoopId);
+                console.log("[startAllyLoop] Starting independent ally loop.");
+                const loop = () => {
+                    if (this.state === 'BATTLE' && this.e && this.e.hp > 0) {
+                        this.processAllies();
+                    }
+                    this.allyLoopId = requestAnimationFrame(loop);
+                };
+                loop();
             }
 
             showBossMessage() {
@@ -2516,10 +2938,13 @@
                 if (this.state !== 'BATTLE') return;
 
                 this.atk(true); // Main Player Attack
-                this.processAllies(); // Ally Attacks
+                // this.processAllies(); // Ally Logic moved to independent loop
 
                 const speed = this.getSpeedMultiplier();
-                if (this.e.hp <= 0) { setTimeout(() => this.win(), 500 / speed); return; }
+                const config = (settings.data && settings.data.config && settings.data.config.gameSettings) || {};
+                const delayMult = config.battleDelayMultiplier || 1.0;
+
+                if (this.e.hp <= 0) { setTimeout(() => this.win(), (500 * delayMult) / speed); return; }
 
                 let attackDelay = 1000 / (this.p.aspd || 1) / speed;
                 // Safety Clamp: Min 20ms, Max 5000ms to prevent stall or freeze
@@ -2538,21 +2963,40 @@
             processAllies() {
                 const now = Date.now();
                 this.allies.forEach(ally => {
+                    // Ensure lastAttack is initialized
+                    if (!ally.lastAttack) ally.lastAttack = 0;
+
                     const aspd = ally.aspd || 1.0;
                     if (now - ally.lastAttack >= (1000 / aspd)) {
                         ally.lastAttack = now;
-                        // DMG Calc
-                        let dmg = ally.atk || 10;
+                        // DMG Calc: (Base + Stat Points) + Weapon Attack
+                        const baseAndStatAtk = ally.atk || 10;
+                        const wAtk = this.getWeaponAtk(ally.weapon || this.r.weapons[0]);
+                        let dmg = baseAndStatAtk + wAtk;
+
                         let isCrit = Math.random() * 100 < (ally.critRate || 5);
                         if (isCrit) dmg *= ((ally.critDmg || 150) / 100);
 
-                        // Hit Enemy
-                        this.e.hp = Math.max(0, this.e.hp - dmg);
-                        this.updateEHp();
-                        this.showDmg(dmg, isCrit, false); // Show damage (maybe color code for ally later?)
+                        const finalDmg = Math.floor(dmg);
 
-                        // Visual
-                        if (window.game3d) window.game3d.triggerAllyAttack(ally.slotId);
+                        // Apply Damage (FIX: Previously missing)
+                        if (this.e && this.e.hp > 0) {
+                            const def = this.e.def || 0;
+                            const realDmg = Math.max(1, finalDmg - def);
+                            this.e.hp = Math.max(0, this.e.hp - realDmg);
+
+                            // Update enemy HP bar
+                            this.updateEHp();
+
+                            // Visual
+                            if (window.game3d) {
+                                window.game3d.triggerAllyAttack(ally.slotId);
+                                const pos = window.game3d.getAllyScreenPosition(ally.slotId);
+                                this.showDmg(realDmg, isCrit, false, true, pos);
+                            } else {
+                                this.showDmg(realDmg, isCrit, false, true);
+                            }
+                        }
                     }
                 });
             }
@@ -2606,17 +3050,31 @@
                     this.log(`🎉 레벨업! (Lv.${this.p.lv}) +5 스탯 포인트!`);
                     this.saveProgress(); // Save on Level Up
                 }
-                this.stage++;
+
+                // Increment wave counter
+                this.wave++;
+                if (this.wave > this.maxWaves) {
+                    this.wave = 1; // Reset wave to 1 for new stage
+                    this.stage++;
+                } else {
+                    // Don't increment stage if still within same 10 waves
+                }
+
+                this.updateStageDisplay(); // Update stage display when advancing
+                this.reload(); // Apply new stage background
                 this.updateUI();
                 this.saveProgress(); // Save on Stage Clear
                 this.walk();
             }
 
             die() {
-                this.log(`💀 사망... 복귀`);
+                this.log(`💀 사망했습니다... (이전 스테이지로 후퇴)`);
                 this.showDeathMessage(); // 사망 연출
 
-                this.stage = 1; this.p.hp = this.p.maxHp;
+                // Death Penalty: Go back 10 waves (1 Stage)
+                this.stage = Math.max(1, this.stage - (this.bossInterval || 10));
+                this.p.hp = this.p.maxHp;
+
                 document.getElementById('enemy-container').style.display = 'none';
                 this.updateUI();
                 this.saveProgress(); // 자동저장
@@ -2632,7 +3090,7 @@
                     style.textContent = `
                         .death-overlay {
                             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                            background: radial-gradient(circle, transparent 20%, rgba(139, 0, 0, 0.8) 90%);
+                            background: radial-gradient(circle, transparent 20%, rgba(139, 0, 0, 0.4) 90%);
                             display: flex; justify-content: center; align-items: center;
                             z-index: 10000; animation: fadeIn 0.3s forwards;
                             pointer-events: none;
@@ -2996,6 +3454,16 @@
             getUpgradeCost(t) {
                 // Use GAME_PRICES
                 if (t === 'potion') return GAME_PRICES.potion;
+                if (t === 'hpBoost') {
+                    // Base 100, Growth 1.1? Or Fixed?
+                    // Let's assume arithmetic or small geometric.
+                    // User said "100G" in HTML.
+                    // config.json might not have hpBoost.
+                    // Let's use logic similar to others if not found, or fixed.
+                    // config is: { base: 100, growth: 1.1 }
+                    const count = (this.p.purchased && this.p.purchased.hpBoost) || 0;
+                    return Math.floor(100 * Math.pow(1.1, count));
+                }
 
                 const keyMap = { upgrade: 'upgrade', aspd: 'aspd', critRate: 'critRate', critDmg: 'critDmg' };
                 const config = GAME_PRICES[keyMap[t]];
@@ -3009,8 +3477,8 @@
             }
 
             updateShopCosts() {
-                const types = ['potion', 'upgrade', 'aspd', 'critRate', 'critDmg'];
-                const idMap = { potion: 'shop-cost-potion', upgrade: 'shop-cost-atk', aspd: 'shop-cost-aspd', critRate: 'shop-cost-critRate', critDmg: 'shop-cost-critDmg' };
+                const types = ['hpBoost', 'upgrade', 'aspd', 'critRate', 'critDmg'];
+                const idMap = { hpBoost: 'shop-cost-hpBoost', upgrade: 'shop-cost-atk', aspd: 'shop-cost-aspd', critRate: 'shop-cost-critRate', critDmg: 'shop-cost-critDmg' };
 
                 types.forEach(t => {
                     const cost = this.getUpgradeCost(t);
@@ -3027,10 +3495,12 @@
                     return;
                 }
 
-                if (t === 'potion') {
+                if (t === 'hpBoost') {
                     this.p.gold -= cost;
-                    this.p.hp = this.p.maxHp;
-                    this.log("💖 체력 회복!");
+                    this.p.maxHp += 25;
+                    this.p.hp += 25; // 현재 체력도 같이 증가
+                    this.p.purchased.hpBoost = (this.p.purchased.hpBoost || 0) + 1;
+                    this.log(`💗 최대 체력 증가! (+25) 비용: ${NumFormat.format(cost)}G`);
                 }
                 else if (t === 'upgrade') {
                     this.p.gold -= cost;
@@ -3163,14 +3633,36 @@
                 document.getElementById('hp-fill-enemy').style.width = Math.max(0, p) + "%";
             }
 
-            showDmg(v, c, isP) {
+            showDmg(v, c, isP, isAlly = false, pos = null) {
                 if (!this.showDamageText) return; // 옵션 체크
                 const w = document.getElementById('game-container');
                 const el = document.createElement('div');
                 el.className = 'dmg-text';
                 el.innerText = NumFormat.format(v) + (c ? "!" : "");
-                if (isP) { el.style.color = 'red'; el.style.top = '60%'; }
-                else if (c) { el.style.color = 'orange'; el.style.fontSize = "70px"; }
+
+                if (pos) {
+                    // Custom Position (for Allies)
+                    el.style.left = pos.x + 'px';
+                    el.style.top = pos.y + 'px';
+                    // Ensure it doesn't overlap perfectly if multiple
+                    el.style.transform = `translate(-50%, -50%) translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+                }
+
+                if (isP) {
+                    // Player took damage (Red)
+                    el.style.color = 'red';
+                    // Only set top if pos is not provided, otherwise pos dictates it
+                    if (!pos) el.style.top = '60%';
+                } else if (isAlly) {
+                    // Ally hit enemy (Cyan)
+                    el.style.color = '#3498db';
+                    if (c) el.style.fontSize = "60px";
+                } else if (c) {
+                    // Player hit enemy (Crit - Orange)
+                    el.style.color = 'orange';
+                    el.style.fontSize = "70px";
+                }
+
                 w.appendChild(el);
                 setTimeout(() => el.remove(), 800);
             }
@@ -3258,11 +3750,17 @@
             openInventory() {
                 this.closeAllOverlays();
                 document.getElementById('inventory-overlay').style.display = 'flex';
+                // Hide ally buttons when inventory is open
+                document.getElementById('ally-slot-left').style.display = 'none';
+                document.getElementById('ally-slot-right').style.display = 'none';
                 this.renderInventory();
             }
 
             closeInventory() {
                 document.getElementById('inventory-overlay').style.display = 'none';
+                // Show ally buttons when inventory is closed
+                document.getElementById('ally-slot-left').style.display = 'flex';
+                document.getElementById('ally-slot-right').style.display = 'flex';
             }
 
             // ===== 대장간 시스템 =====
@@ -3753,7 +4251,10 @@
 
                 this.updateHand();
                 // 3D Model Update
-                if (window.game3d) window.game3d.equipWeapon(this.p.equippedWeapon ? this.p.equippedWeapon.id : 0);
+                if (window.game3d) window.game3d.equipWeapon(
+                    wepIdx >= 0 ? wepIdx : 0,
+                    this.p.equippedWeapon ? this.p.equippedWeapon.grade : 'common'
+                );
 
                 // Commented out: renderInventory is called by showItemActions
                 // this.renderInventory();
@@ -3874,8 +4375,8 @@
 
                 // Sync 3D weapon
                 if (window.game3d) {
-                    const wid = this.p.equippedWeapon ? this.p.equippedWeapon.id : 0;
-                    window.game3d.equipWeapon(wid || 0); // 0 or undefined for default
+                    const wid = this.p.wIdx || 0;
+                    window.game3d.equipWeapon(wid, this.p.equippedWeapon ? this.p.equippedWeapon.grade : 'common');
                 }
             }
 
@@ -3980,16 +4481,27 @@
                 const h = 500;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x87CEEB); // Sky Blue
+                // Phase 2: Skybox will be added in createSkybox()
+                this.scene.background = new THREE.Color(0x87CEEB); // Fallback color
                 // this.scene.fog = new THREE.Fog(0x000000, 1, 20); // Removed fog that was turning everything black
 
                 this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
                 this.camera.position.set(0, 1.5, 3);
                 this.camera.lookAt(0, -1, -1); // Look at Character (Y=-2) Chest/Head area
 
-                this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                // Quality Enhancement: Improved Renderer Settings
+                this.renderer = new THREE.WebGLRenderer({
+                    alpha: true,
+                    antialias: true,
+                    powerPreference: 'high-performance' // Prefer dedicated GPU if available
+                });
                 this.renderer.setSize(w, h);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
+
+                // Quality Enhancement: Improved Shadow Settings
                 this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer, higher quality shadows
+
                 container.innerHTML = ''; // Clear previous if any
                 container.appendChild(this.renderer.domElement);
 
@@ -4002,6 +4514,12 @@
                 dirLight.position.set(-3, 10, 5);
                 dirLight.castShadow = true;
                 this.scene.add(dirLight);
+
+                // Phase 2: Create Skybox
+                this.createSkybox();
+
+                // Phase 2: Create Atmospheric Particles
+                this.createAtmosphericParticles();
 
                 // Environment (Grass, Road, Simple Scenery)
                 this.createEnvironment();
@@ -4138,78 +4656,144 @@
                 return tex;
             }
 
+            // Phase 2: Create Skybox with Gradient
+            createSkybox() {
+                // Create a large sphere for skybox
+                const skyGeo = new THREE.SphereGeometry(90, 32, 32);
+
+                // Create canvas for gradient texture
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // Default gradient (will be updated with updateBackgroundTheme)
+                const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+                gradient.addColorStop(0, '#87CEEB'); // Sky blue at top
+                gradient.addColorStop(0.7, '#B0C4DE'); // Light steel blue
+                gradient.addColorStop(1, '#E6E6FA'); // Lavender at horizon
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512);
+
+                const skyTex = new THREE.CanvasTexture(canvas);
+                const skyMat = new THREE.MeshBasicMaterial({
+                    map: skyTex,
+                    side: THREE.BackSide, // Render inside
+                    fog: false
+                });
+
+                this.skybox = new THREE.Mesh(skyGeo, skyMat);
+                this.scene.add(this.skybox);
+                this.skyboxCanvas = canvas; // Store for updates
+            }
+
+            // Phase 2: Create Atmospheric Particles for Depth
+            createAtmosphericParticles() {
+                const particleCount = 50;
+                const particles = new THREE.Group();
+
+                for (let i = 0; i < particleCount; i++) {
+                    const size = 0.1 + Math.random() * 0.2;
+                    const geometry = new THREE.SphereGeometry(size, 4, 4);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.1 + Math.random() * 0.2
+                    });
+
+                    const particle = new THREE.Mesh(geometry, material);
+
+                    // Random position in a large volume
+                    particle.position.set(
+                        (Math.random() - 0.5) * 40,
+                        Math.random() * 20 - 2,
+                        (Math.random() - 0.5) * 60
+                    );
+
+                    // Store initial position for animation
+                    particle.userData = {
+                        initialY: particle.position.y,
+                        speed: 0.01 + Math.random() * 0.02,
+                        range: 2 + Math.random() * 3
+                    };
+
+                    particles.add(particle);
+                }
+
+                this.scene.add(particles);
+                this.atmosphericParticles = particles;
+            }
+
             createEnvironment() {
-                // Texture Loader for scrolling (using simple colors for now, but we can simulate scroll by moving Texture Offset if we had textures)
-                // Since we use Color Materials, we can't "scroll" the texture easily without a texture map.
-                // IMPROVEMENT: Use a CanvasTexture to generate a stripe pattern we can scroll!
+                // Phase 4: Full 3D Textured Tunnel
+                this.textureLoader = new THREE.TextureLoader();
 
-                // 1. Generate High Quality Noise Grass Texture
-                const grassCanvas = document.createElement('canvas');
-                grassCanvas.width = 256; grassCanvas.height = 256;
-                const ctxG = grassCanvas.getContext('2d');
-                ctxG.fillStyle = '#2d4c1e'; ctxG.fillRect(0, 0, 256, 256);
-                for (let i = 0; i < 5000; i++) {
-                    const x = Math.random() * 256;
-                    const y = Math.random() * 256;
-                    ctxG.fillStyle = Math.random() > 0.5 ? '#3a5f25' : '#223816';
-                    ctxG.fillRect(x, y, 2, 2);
-                }
-                const grassTex = new THREE.CanvasTexture(grassCanvas);
-                grassTex.wrapS = THREE.RepeatWrapping;
-                grassTex.wrapT = THREE.RepeatWrapping;
-                grassTex.repeat.set(50, 50);
+                // Helper to create environment planes
+                const createPlane = (w, h, name) => {
+                    const geo = new THREE.PlaneGeometry(w, h); // Width, Height
+                    // Use Standard Material for PBR lighting response
+                    const mat = new THREE.MeshStandardMaterial({
+                        roughness: 0.8,
+                        metalness: 0.1,
+                        side: THREE.FrontSide, // Only visible from inside
+                        color: 0x888888 // Default grey until texture loads
+                    });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.name = name;
+                    mesh.receiveShadow = true;
+                    return mesh;
+                };
 
-                // 2. Generate Road Texture (Dirt/Cobble noise)
-                const roadCanvas = document.createElement('canvas');
-                roadCanvas.width = 128; roadCanvas.height = 128;
-                const ctxR = roadCanvas.getContext('2d');
-                ctxR.fillStyle = '#594636'; ctxR.fillRect(0, 0, 128, 128);
-                for (let i = 0; i < 1000; i++) {
-                    ctxR.fillStyle = Math.random() > 0.5 ? '#4a3b2d' : '#6b5442';
-                    ctxR.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
-                }
-                const roadTex = new THREE.CanvasTexture(roadCanvas);
-                roadTex.wrapS = THREE.RepeatWrapping;
-                roadTex.wrapT = THREE.RepeatWrapping;
-                roadTex.repeat.set(1, 25);
-                if (this.renderer.capabilities.getMaxAnisotropy) {
-                    roadTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-                }
+                // Tunnel Dimensions
+                const tunnelLength = 120; // Long enough to cover view
+                const tunnelWidth = 20;
+                const tunnelHeight = 12; // -2 to 10
+                const centerZ = -50; // Center point of tunnel
 
-                // Ground (Grass)
-                const groundGeo = new THREE.PlaneGeometry(100, 100);
-                const groundMat = new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.8, metalness: 0.1 });
-                const ground = new THREE.Mesh(groundGeo, groundMat);
-                ground.rotation.x = -Math.PI / 2;
-                ground.position.y = -2; // Below character feet
-                ground.receiveShadow = true;
-                this.scene.add(ground);
-                this.groundTex = grassTex; // Save for scrolling
+                // 1. Floor
+                this.floorMesh = createPlane(tunnelWidth, tunnelLength, 'floor');
+                this.floorMesh.rotation.x = -Math.PI / 2;
+                this.floorMesh.position.set(0, -2, centerZ);
+                this.scene.add(this.floorMesh);
 
-                // Road
-                const roadGeo = new THREE.PlaneGeometry(4, 100);
-                const roadMat = new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.9 });
-                const road = new THREE.Mesh(roadGeo, roadMat);
-                road.rotation.x = -Math.PI / 2;
-                road.position.y = -1.99; // Slightly above ground to avoid z-fight
-                road.receiveShadow = true;
-                this.scene.add(road);
-                this.roadTex = roadTex; // Save for scrolling
+                // 2. Ceiling
+                this.ceilingMesh = createPlane(tunnelWidth, tunnelLength, 'ceiling');
+                this.ceilingMesh.rotation.x = Math.PI / 2;
+                this.ceilingMesh.position.set(0, -2 + tunnelHeight, centerZ);
+                this.scene.add(this.ceilingMesh);
 
-                // Simple Trees (Cones) - We need to Move them physically to scroll them
-                this.trees = []; // Array to store trees
-                const treeGeo = new THREE.ConeGeometry(1, 4, 8);
+                // 3. Walls (Left & Right)
+                // PlaneGeometry(Width, Height) -> For walls, Width is Length(Z), Height is Height(Y)
+                this.wallLeftMesh = createPlane(tunnelLength, tunnelHeight, 'wallLeft');
+                this.wallLeftMesh.rotation.y = Math.PI / 2;
+                this.wallLeftMesh.position.set(-tunnelWidth / 2, -2 + tunnelHeight / 2, centerZ);
+                this.scene.add(this.wallLeftMesh);
+
+                this.wallRightMesh = createPlane(tunnelLength, tunnelHeight, 'wallRight');
+                this.wallRightMesh.rotation.y = -Math.PI / 2;
+                this.wallRightMesh.position.set(tunnelWidth / 2, -2 + tunnelHeight / 2, centerZ);
+                this.scene.add(this.wallRightMesh);
+
+                // Initial Theme Load (Default Forest)
+                // Note: updateBackgroundTheme will be called again by Game init, but good to have default
+                this.updateBackgroundTheme('숲');
+
+                // Trees (Moved further out to not clip with walls)
+                this.trees = [];
+                const treeGeo = new THREE.ConeGeometry(1.5, 5, 8);
                 const treeMat = new THREE.MeshStandardMaterial({ color: 0x114411, roughness: 0.9 });
 
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < 12; i++) {
                     const treeLeft = new THREE.Mesh(treeGeo, treeMat);
-                    treeLeft.position.set(-5 - Math.random() * 5, 0, -50 + Math.random() * 100);
+                    // Position outside the walls (Walls are at +/- 10)
+                    treeLeft.position.set(-12 - Math.random() * 5, 0.5, -10 - Math.random() * 100);
                     treeLeft.castShadow = true;
                     this.scene.add(treeLeft);
                     this.trees.push(treeLeft);
 
                     const treeRight = new THREE.Mesh(treeGeo, treeMat);
-                    treeRight.position.set(5 + Math.random() * 5, 0, -50 + Math.random() * 100);
+                    treeRight.position.set(12 + Math.random() * 5, 0.5, -10 - Math.random() * 100);
                     treeRight.castShadow = true;
                     this.scene.add(treeRight);
                     this.trees.push(treeRight);
@@ -4238,44 +4822,145 @@
                 }
             }
 
-            createWeaponMesh(id) {
-                // Procedural Sword
+            createWeaponMesh(id, grade) {
+                // Debug Log
+                // console.log(`[createWeaponMesh] ID: ${id}, Grade: ${grade}`); 
+
+                if (Number(id) === 0) {
+                    return new THREE.Group(); // Invisible for Fists
+                }
+
                 const group = new THREE.Group();
 
-                // Blade
-                const bladeGeo = new THREE.BoxGeometry(0.1, 1.5, 0.05);
+                let type = 'sword';
+                let weaponData = null;
+                if (window.game && window.game.r && window.game.r.weapons) {
+                    weaponData = window.game.r.weapons[id];
+
+                    // Texture Support
+                    if (weaponData && weaponData.icon && (weaponData.icon.indexOf('assets/') === 0 || weaponData.icon.indexOf('data:') === 0 || weaponData.icon.indexOf('http') === 0)) {
+                        // NOTE: 'file://' protocol blocks TextureLoader in browsers due to CORS.
+                        const isFile = window.location.protocol === 'file:';
+                        const isDataUri = weaponData.icon.indexOf('data:') === 0;
+
+                        if (!isFile || isDataUri) {
+                            console.log(`[createWeaponMesh] Loading Texture: ${weaponData.icon}`);
+                            const tex = new THREE.TextureLoader().load(weaponData.icon);
+                            tex.colorSpace = THREE.SRGBColorSpace;
+                            // Use a Plane for the image
+                            const mat = new THREE.MeshStandardMaterial({
+                                map: tex,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                alphaTest: 0.1
+                            });
+                            const size = 2.0;
+                            const geo = new THREE.PlaneGeometry(size, size);
+                            const mesh = new THREE.Mesh(geo, mat);
+
+                            mesh.position.y = size * 0.4;
+
+                            group.add(mesh);
+                            return group;
+                        } else {
+                            console.warn("[createWeaponMesh] Skipping texture load due to file:// protocol to prevent invisible mesh.");
+                            // Fall through to procedural
+                        }
+                    }
+
+                    if (weaponData) {
+                        const name = weaponData.name;
+                        const nName = name.normalize('NFC');
+                        // Debug
+                        console.log(`[createWeaponMesh] Name: ${nName}, Codes: ${nName.charCodeAt(0)}, ${nName.charCodeAt(1)}`);
+
+                        // Use Unicode escapes
+                        // 도끼(\ub3c4\ub07c), 망치(\ub9dd\uce58), 묠니르(\ubb20\ub2c8\ub974), 낫(\ub0af), 창(\ucc3d)
+                        if (nName.includes('\ub3c4\ub07c')) type = 'axe';
+                        else if (nName.includes('\ub9dd\uce58') || nName.includes('\ubb20\ub2c8\ub974')) type = 'hammer';
+                        else if (nName.includes('\ub0af')) type = 'scythe';
+                        else if (nName.includes('\ucc3d')) type = 'spear';
+                    } else {
+                        console.warn(`[createWeaponMesh] Weapon Data missing for ID: ${id}`);
+                    }
+                } else {
+                    console.warn(`[createWeaponMesh] window.game.r.weapons not accessible`);
+                }
+
+                // Materials
                 const bladeMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 });
-                const blade = new THREE.Mesh(bladeGeo, bladeMat);
-                blade.position.y = 0.75;
-                blade.castShadow = true;
-                group.add(blade);
-
-                // Hilt
-                const hiltGeo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
-                const hiltMat = new THREE.MeshStandardMaterial({ color: 0x885522 });
-                const hilt = new THREE.Mesh(hiltGeo, hiltMat);
-                hilt.position.y = 0;
-                group.add(hilt);
-
-                // Handle
-                const handleGeo = new THREE.BoxGeometry(0.08, 0.4, 0.08);
                 const handleMat = new THREE.MeshStandardMaterial({ color: 0x553311 });
-                const handle = new THREE.Mesh(handleGeo, handleMat);
-                handle.position.y = -0.2;
-                group.add(handle);
 
-                if (id % 2 === 0) bladeMat.color.setHex(0xffaa00);
-                if (id % 3 === 0) bladeMat.color.setHex(0x00aaff);
+                if (type === 'axe') {
+                    // Axe Geometry
+                    // Handle
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 0.08), handleMat);
+                    handle.position.y = 0.3;
+                    group.add(handle);
+
+                    // Blade
+                    const bladeGeo = new THREE.BoxGeometry(0.5, 0.4, 0.1);
+                    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+                    blade.position.set(0.3, 0.7, 0);
+                    group.add(blade);
+                } else if (type === 'hammer') {
+                    // Hammer Geometry
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.1), handleMat);
+                    handle.position.y = 0.3;
+                    group.add(handle);
+
+                    const headGeo = new THREE.BoxGeometry(0.4, 0.3, 0.3);
+                    const head = new THREE.Mesh(headGeo, bladeMat);
+                    head.position.set(0, 0.8, 0);
+                    group.add(head);
+                } else if (type === 'scythe') {
+                    // Scythe Geometry
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.8, 0.06), handleMat);
+                    handle.position.y = 0.6;
+                    group.add(handle);
+
+                    const bladeGeo = new THREE.ConeGeometry(0.1, 1.0, 4);
+                    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+                    blade.position.set(0.4, 1.4, 0);
+                    blade.rotation.z = -Math.PI / 4;
+                    blade.rotation.y = Math.PI / 2; // Flat aspect
+                    group.add(blade);
+                } else if (type === 'spear') {
+                    // Spear Geometry
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.0, 0.06), handleMat);
+                    handle.position.y = 0.5;
+                    group.add(handle);
+
+                    const tipGeo = new THREE.ConeGeometry(0.1, 0.5, 8);
+                    const tip = new THREE.Mesh(tipGeo, bladeMat);
+                    tip.position.y = 1.5;
+                    group.add(tip);
+                } else {
+                    // Default Sword
+                    const bladeGeo = new THREE.BoxGeometry(0.1, 1.5, 0.05);
+                    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+                    blade.position.y = 0.75;
+                    blade.castShadow = true;
+                    group.add(blade);
+
+                    // Hilt
+                    const hiltGeo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
+                    const hiltMat = new THREE.MeshStandardMaterial({ color: 0x885522 });
+                    const hilt = new THREE.Mesh(hiltGeo, hiltMat);
+                    hilt.position.y = 0;
+                    group.add(hilt);
+                    bladeMat.color.setHex(0xffaa00);
+                }
 
                 return group;
             }
 
-            equipWeapon(id) {
+            equipWeapon(id, grade) {
                 if (this.weaponMesh) {
                     if (this.weaponMesh.parent) this.weaponMesh.parent.remove(this.weaponMesh);
                     else this.scene.remove(this.weaponMesh);
                 }
-                this.weaponMesh = this.createWeaponMesh(id);
+                this.weaponMesh = this.createWeaponMesh(id, grade);
                 this.attachWeaponToHand();
             }
 
@@ -4307,10 +4992,26 @@
             }
 
             addAlly(ally) {
+                console.log(`[Game3D.addAlly] Called for Slot ${ally.slotId}`, ally);
                 if (this.allyMeshes[ally.slotId]) {
                     this.scene.remove(this.allyMeshes[ally.slotId]);
                 }
-                const mesh = this.createWeaponMesh(ally.weapon ? ally.weapon.id : 0);
+                // Pass grade for sync
+                const grade = ally.weapon ? ally.weapon.grade : 'common';
+
+                // Fix: Use wIdx (Type ID) instead of Unique ID
+                let weaponId = ally.wIdx;
+
+                // Fallback for old save data or missing wIdx
+                if ((weaponId === undefined || weaponId === null) && ally.weapon && ally.weapon.name) {
+                    const found = window.game.r.weapons.findIndex(w => w.name === ally.weapon.name);
+                    if (found >= 0) weaponId = found;
+                }
+                // VISIBILITY FIX: If weaponId is 0 or invalid, default to 1 (Basic Sword)
+                if (!weaponId) weaponId = 1;
+
+                console.log(`[Game3D.addAlly] Creating mesh with ID: ${weaponId}, Grade: ${grade}`);
+                const mesh = this.createWeaponMesh(weaponId, grade);
 
                 // Dynamic Positioning
                 let cx = 0;
@@ -4336,22 +5037,182 @@
                 // Player Z=1. Let's put allies at Z=0.
                 mesh.position.set(cx, -1.5, 0);
 
+                // Add Level Text Sprite
+                if (ally.lv) {
+                    const sprite = this.createLevelSprite(ally.lv);
+                    sprite.position.set(0, 2.5, 0); // Above the sword
+                    mesh.add(sprite); // Attach to weapon mesh group
+                }
+
                 this.scene.add(mesh);
                 this.allyMeshes[ally.slotId] = mesh;
             }
 
+            createLevelSprite(lv) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128; // Increased resolution
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, 0, 128, 64);
+                ctx.font = 'bold 32px Arial';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const text = `Lv.${lv}`;
+                ctx.fillText(text, 64, 32);
+                const tex = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.SpriteMaterial({ map: tex });
+                const sprite = new THREE.Sprite(mat);
+                sprite.scale.set(1, 0.5, 1);
+                return sprite;
+            }
+
+            getAllyScreenPosition(slotId) {
+                const mesh = this.allyMeshes[slotId];
+                if (!mesh) return null;
+                // Get position above the mesh (where Level text is, roughly Y=2.5)
+                const pos = mesh.position.clone();
+                pos.y += 3.5; // Slightly higher than Level Sprite (Y=2.5)
+                pos.project(this.camera);
+                const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(pos.y * 0.5) + 0.5) * window.innerHeight;
+                return { x, y };
+            }
+
             removeAlly(slotId) {
+                console.log(`[Game3D.removeAlly] Removing Slot ${slotId}`);
                 if (this.allyMeshes[slotId]) {
                     this.scene.remove(this.allyMeshes[slotId]);
                     delete this.allyMeshes[slotId];
                 }
             }
 
+            // Quality Enhancement: Dynamic Background Theme
+            // Quality Enhancement: Dynamic Background Theme
+            updateBackgroundTheme(themeName) {
+                if (!this.scene) return;
+
+                // Hide CSS Tunnel overlay
+                const cssTunnel = document.querySelector('.tunnel-container');
+                if (cssTunnel) cssTunnel.style.display = 'none';
+
+                // Texture Mappings
+                const themeTextures = {
+                    '숲': {
+                        floor: 'theme_grass_floor.png',
+                        wall: 'theme_grass_wall.png',
+                        ceiling: 'theme_grass_ceiling.png',
+                        color: 0xffffff
+                    },
+                    '던전': {
+                        floor: 'theme_cave_floor.png',
+                        wall: 'theme_cave_wall.png',
+                        ceiling: 'theme_cave_ceiling.png',
+                        color: 0x8888aa // Blue-ish tint
+                    },
+                    '용암동굴': {
+                        floor: 'theme_cave_floor.png',
+                        wall: 'theme_cave_wall.png',
+                        ceiling: 'theme_cave_ceiling.png',
+                        color: 0xffaaaa // Red-ish tint for lava
+                    },
+                    '얼음성': {
+                        floor: 'theme_snow_floor.png',
+                        wall: 'theme_snow_wall.png',
+                        ceiling: 'theme_snow_ceiling.png',
+                        color: 0xddffff
+                    },
+                    '마왕성': {
+                        floor: 'theme_castle_floor.png',
+                        wall: 'theme_castle_wall.png',
+                        ceiling: 'theme_castle_ceiling.png',
+                        color: 0xaa88ff // Purple tint
+                    }
+                };
+
+                // Skybox Gradients (Phase 2 - kept)
+                const skyboxGradients = {
+                    '던전': { top: '#2a2a3d', mid: '#1a1a2e', bottom: '#0f0f1e' },
+                    '숲': { top: '#87CEEB', mid: '#B0C4DE', bottom: '#E6E6FA' },
+                    '용암동굴': { top: '#8B2500', mid: '#CD5C5C', bottom: '#FFA07A' },
+                    '얼음성': { top: '#B0E0E6', mid: '#E0FFFF', bottom: '#F0F8FF' },
+                    '마왕성': { top: '#1a0033', mid: '#4B0082', bottom: '#8B008B' }
+                };
+
+                const currentTexSet = themeTextures[themeName] || themeTextures['숲'];
+                const basePath = 'assets/textures/';
+
+                // Helper to load and apply texture
+                const applyTex = (mesh, filename, repeatX, repeatY, colorTint) => {
+                    if (!mesh || !this.textureLoader) return;
+
+                    const fullPath = basePath + filename;
+                    this.textureLoader.load(fullPath, (tex) => {
+                        tex.colorSpace = THREE.SRGBColorSpace;
+                        tex.wrapS = THREE.RepeatWrapping;
+                        tex.wrapT = THREE.RepeatWrapping;
+                        tex.repeat.set(repeatX, repeatY);
+
+                        // Anisotropy for sharp angles
+                        if (this.renderer.capabilities.getMaxAnisotropy) {
+                            tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+                        }
+
+                        if (mesh.material) {
+                            mesh.material.map = tex;
+                            mesh.material.color.setHex(colorTint || 0xffffff);
+                            mesh.material.needsUpdate = true;
+                        }
+                    });
+                };
+
+                // Apply Textures w/ Tint
+                // Floor: 20x120 -> Repeat 1x6
+                applyTex(this.floorMesh, currentTexSet.floor, 1, 6, currentTexSet.color);
+
+                // Ceiling: 20x120 -> Repeat 1x6
+                applyTex(this.ceilingMesh, currentTexSet.ceiling, 1, 6, currentTexSet.color);
+
+                // Walls: 120x12 -> Repeat 6x1 (Walls are long horizontally in UV space?)
+                // Wall Geometry is (120, 12).
+                // If UV matches geometry, u=0..1 is width(120), v=0..1 is height(12).
+                // We want texture to tile properly. Texture likely 1:1 aspect.
+                // 120/12 = 10. So repeat X should be 10?
+                applyTex(this.wallLeftMesh, currentTexSet.wall, 6, 1, currentTexSet.color);
+                applyTex(this.wallRightMesh, currentTexSet.wall, 6, 1, currentTexSet.color);
+
+                // Update Background Color / Skybox
+                const themeBgColors = {
+                    '던전': 0x2a2a3d, '숲': 0x87CEEB, '용암동굴': 0x8B2500,
+                    '얼음성': 0xADD8E6, '마왕성': 0x1a0033
+                };
+                const bgColor = themeBgColors[themeName] || 0x87CEEB;
+                this.scene.background.setHex(bgColor);
+
+                if (this.skybox && this.skyboxCanvas) {
+                    const gradient = skyboxGradients[themeName] || skyboxGradients['숲'];
+                    const ctx = this.skyboxCanvas.getContext('2d');
+                    const grad = ctx.createLinearGradient(0, 0, 0, 512);
+                    grad.addColorStop(0, gradient.top);
+                    grad.addColorStop(0.5, gradient.mid);
+                    grad.addColorStop(1, gradient.bottom);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, 512, 512);
+                    this.skybox.material.map.needsUpdate = true;
+                }
+
+                console.log(`🎨 Background theme updated: ${themeName}`);
+            }
+
             triggerAllyAttack(slotId) {
                 const mesh = this.allyMeshes[slotId];
                 if (mesh) {
-                    mesh.rotation.x += 1;
-                    setTimeout(() => mesh.rotation.x -= 1, 200);
+                    // Fix: Reverse Swing (User Request: "Opposite direction")
+                    // Previously += 1 (Down/Forward?). Now -= 1 (Up/Backward?) or vice versa.
+                    // Let's assume user wants it to look like a backswing or just different.
+                    mesh.rotation.x -= 1;
+                    setTimeout(() => mesh.rotation.x += 1, 200);
                 }
             }
 
@@ -4409,29 +5270,28 @@
                 if (window.game && window.game.state === 'BATTLE') {
                     this.setAnimation('Run');
 
-                    // SYNC LOGIC:
-                    // World Speed: this.speed * 2 (Tree movement)
-                    // Texture Speed: needs to match world movement.
-                    // Ground Plane: 100 units. Texture Repeat: 50.
-                    // 1 Texture Unit = 100/50 = 2 World Units.
-                    // So if we move 2 units in World, Texture Offset should change by 1.
-                    // Offset Change = World Move / 2.
+                    const worldMove = this.speed * 2; // Movement Speed
 
-                    const worldMove = this.speed * 2;
+                    // Scroll Textures for Infinite Tunnel Effect
+                    // Floor & Ceiling: Move offset Y to scroll forward
+                    if (this.floorMesh && this.floorMesh.material.map) {
+                        this.floorMesh.material.map.offset.y -= worldMove * 0.1;
+                    }
+                    if (this.ceilingMesh && this.ceilingMesh.material.map) {
+                        this.ceilingMesh.material.map.offset.y -= worldMove * 0.1;
+                    }
 
-                    // Scroll Textures
-                    // We move trees towards camera (+Z).
-                    // So ground should look like it's moving towards camera (+Offset or -Offset?)
-                    // Usually if you run Forward (-Z), ground moves Backwards (+Z relative to you).
-                    // Here we are static, world moves +Z.
-                    // Texture offset Y usually maps to Z.
-                    // Increasing Offset Y typically scrolls texture "down" (towards +V).
-                    // Let's stick with += which user liked, but match the SCALE.
+                    // Walls: Scroll along length (X axis in UV space for walls rotated Y)
+                    // Need to verify UV orientation. If Mesh created width 120, height 12.
+                    // Usually PlaneGeometry U is width.
+                    if (this.wallLeftMesh && this.wallLeftMesh.material.map) {
+                        this.wallLeftMesh.material.map.offset.x -= worldMove * 0.1;
+                    }
+                    if (this.wallRightMesh && this.wallRightMesh.material.map) {
+                        this.wallRightMesh.material.map.offset.x += worldMove * 0.1; // Reverse for right wall?
+                    }
 
-                    if (this.groundTex) this.groundTex.offset.y += worldMove / 2;
-                    if (this.roadTex) this.roadTex.offset.y += worldMove / 25; // Road repeat is 25, so 100/25 = 4 units per repeat. Offset += Move / 4.
-
-                    // Move Trees
+                    // Move Trees (Physical Objects)
                     if (this.trees) {
                         this.trees.forEach(tree => {
                             tree.position.z += worldMove;
@@ -4442,6 +5302,15 @@
                     }
                 } else {
                     this.setAnimation('Idle');
+                }
+
+                // Phase 2: Animate atmospheric particles (always animate, not just in battle)
+                if (this.atmosphericParticles) {
+                    const time = Date.now() * 0.001;
+                    this.atmosphericParticles.children.forEach(particle => {
+                        const data = particle.userData;
+                        particle.position.y = data.initialY + Math.sin(time * data.speed) * data.range;
+                    });
                 }
 
                 this.renderer.render(this.scene, this.camera);
@@ -4465,7 +5334,7 @@
 
                 // Sync initial 3D weapon
                 if (window.game.p.equippedWeapon && window.game3d) {
-                    window.game3d.equipWeapon(window.game.p.equippedWeapon.id);
+                    window.game3d.equipWeapon(window.game.p.equippedWeapon.id, window.game.p.equippedWeapon.grade);
                 }
 
                 // Global click listener for 3D attack sync

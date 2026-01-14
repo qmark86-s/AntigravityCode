@@ -24,10 +24,11 @@
         "expToNextLevel": 1.2
     },
     "shop": {
-        "potion": {
-            "name": "체력 회복",
-            "price": 50,
-            "effect": "fullHeal"
+        "hpBoost": {
+            "name": "최대체력 +25",
+            "price": 100,
+            "stat": "maxHp",
+            "amount": 25
         },
         "atkBoost": {
             "name": "공격력 +5",
@@ -58,9 +59,40 @@
             "price": 200
         }
     },
+    "gameSettings": {
+        "themeChangeInterval": 1,
+        "battleDelayMultiplier": 0.5
+    },
     "backgrounds": {
-        "wall": "assets/textures/wall.png",
-        "floor": "#1a1a1a",
-        "ceiling": "#050505"
+        "wall": "assets/textures/theme_grass_wall.png",
+        "floor": "assets/textures/theme_grass_floor.png",
+        "ceiling": "assets/textures/theme_grass_ceiling.png"
+    },
+    "stageThemes": {
+        "grass": {
+            "wall": "assets/textures/theme_grass_wall.png",
+            "floor": "assets/textures/theme_grass_floor.png",
+            "ceiling": "assets/textures/theme_grass_ceiling.png"
+        },
+        "cave": {
+            "wall": "assets/textures/theme_cave_wall.png",
+            "floor": "assets/textures/theme_cave_floor.png",
+            "ceiling": "assets/textures/theme_cave_ceiling.png"
+        },
+        "snow": {
+            "wall": "assets/textures/theme_snow_wall.png",
+            "floor": "assets/textures/theme_snow_floor.png",
+            "ceiling": "assets/textures/theme_snow_ceiling.png"
+        },
+        "village": {
+            "wall": "assets/textures/theme_village_wall.png",
+            "floor": "assets/textures/theme_village_floor.png",
+            "ceiling": "assets/textures/theme_village_ceiling.png"
+        },
+        "castle": {
+            "wall": "assets/textures/theme_castle_wall.png",
+            "floor": "assets/textures/theme_castle_floor.png",
+            "ceiling": "assets/textures/theme_castle_ceiling.png"
+        }
     }
 }
