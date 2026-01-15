@@ -193,16 +193,44 @@
                 max-width: 100% !important;
                 max-height: 100% !important;
                 border-radius: 0 !important;
-                display: flex !important;
-                /* Ensure flex for centering */
-                flex-direction: column !important;
-                justify-content: center !important;
-                /* Center content vertically */
-                align-items: center !important;
+                /* Remove global display: flex !important to prevent auto-show */
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
                 background: rgba(0, 0, 0, 0.95) !important;
                 z-index: 2000 !important;
                 padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
                 box-sizing: border-box;
+            }
+
+            /* Only force flex if it's NOT hidden (JS handles display toggle) */
+            /* We trust JS to toggle display:none <-> display:flex/block. 
+               But JS sets 'flex' or 'block'. We want to enforce our flex layout if visible. */
+
+            #smith-overlay:not([style*="display: none"]),
+            #settings-overlay:not([style*="display: none"]),
+            #gacha-overlay:not([style*="display: none"]),
+            #shop-overlay:not([style*="display: none"]),
+            .stat-window
+
+            /* This one is trickier as it might be a class on a div that is shown? Check JS. */
+                {
+                display: flex !important;
+            }
+
+            /* Actually, safer to just NOT use !important on display and rely on JS setting it. 
+               BUT if JS sets block, we want flex for centering. */
+
+            /* Fix: Target active overlays specifically */
+            #settings-overlay[style*="flex"],
+            #settings-overlay[style*="block"],
+            #gacha-overlay[style*="flex"],
+            #gacha-overlay[style*="block"],
+            #smith-overlay[style*="flex"],
+            #smith-overlay[style*="block"],
+            #shop-overlay[style*="flex"],
+            #shop-overlay[style*="block"] {
+                display: flex !important;
             }
 
             /* Center content inside overlays */
