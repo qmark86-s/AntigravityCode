@@ -61,21 +61,30 @@
             --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* ===== GLOBAL RESET (Mobile-First) ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+            height: 100dvh;
+        }
+
         body {
             background: var(--color-bg-dark);
             color: #fff;
             font-family: var(--font-body);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* Phase 7: Safe Area for notched devices */
-            padding-top: env(safe-area-inset-top, 0);
-            padding-bottom: env(safe-area-inset-bottom, 0);
-            padding-left: env(safe-area-inset-left, 0);
-            padding-right: env(safe-area-inset-right, 0);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            /* Prevent scroll - app-like */
             user-select: none;
+            /* Safe Area padding applied to specific elements, not body */
         }
 
         /* 전역 스크롤바 스타일 */
@@ -104,19 +113,39 @@
             overflow-y: auto;
         }
 
+        /* ===== GAME CONTAINER (Mobile-First: Full Screen) ===== */
         #game-container {
-            width: 800px;
-            height: 500px;
-            perspective: 600px;
-            border: 4px solid #444;
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             background: transparent;
-            /* Changed from #000 so 3D scene (if behind) shows, or just to align with scene bg */
-            /* box-shadow: 0 0 30px #000; Keep shadow */
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            max-width: 90vw;
+            z-index: 1;
+            /* No border/shadow on mobile for edge-to-edge */
+        }
+
+        /* Desktop: Add decorative border */
+        @media (min-width: 1025px) {
+            #game-container {
+                position: relative;
+                width: 800px;
+                height: 500px;
+                border: 4px solid #444;
+                border-radius: 8px;
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+                margin: 20px auto;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                overflow: auto;
+            }
         }
 
         /* Responsive Layout - Tablet & Mobile (Standardized) */
@@ -178,13 +207,16 @@
                 /* Click through */
             }
 
-            /* Overlays: Full Screen Centered */
+            /* Overlays: Full Screen when visible (JS controls display) */
             .overlay-window,
             .shop-window,
             .stat-window,
             #settings-overlay,
             #gacha-overlay,
-            #smith-overlay {
+            #smith-overlay,
+            #shop-overlay,
+            #inventory-overlay,
+            #stat-overlay {
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
@@ -193,53 +225,23 @@
                 max-width: 100% !important;
                 max-height: 100% !important;
                 border-radius: 0 !important;
-                /* Remove global display: flex !important to prevent auto-show */
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
                 background: rgba(0, 0, 0, 0.95) !important;
                 z-index: 2000 !important;
-                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+                padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px) !important;
                 box-sizing: border-box;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
-            /* Only force flex if it's NOT hidden (JS handles display toggle) */
-            /* We trust JS to toggle display:none <-> display:flex/block. 
-               But JS sets 'flex' or 'block'. We want to enforce our flex layout if visible. */
-
-            #smith-overlay:not([style*="display: none"]),
-            #settings-overlay:not([style*="display: none"]),
-            #gacha-overlay:not([style*="display: none"]),
-            #shop-overlay:not([style*="display: none"]),
-            .stat-window
-
-            /* This one is trickier as it might be a class on a div that is shown? Check JS. */
-                {
-                display: flex !important;
-            }
-
-            /* Actually, safer to just NOT use !important on display and rely on JS setting it. 
-               BUT if JS sets block, we want flex for centering. */
-
-            /* Fix: Target active overlays specifically */
-            #settings-overlay[style*="flex"],
-            #settings-overlay[style*="block"],
-            #gacha-overlay[style*="flex"],
-            #gacha-overlay[style*="block"],
-            #smith-overlay[style*="flex"],
-            #smith-overlay[style*="block"],
-            #shop-overlay[style*="flex"],
-            #shop-overlay[style*="block"] {
-                display: flex !important;
-            }
-
-            /* Center content inside overlays */
+            /* Modal content centering */
             #settings-overlay>*,
             #gacha-overlay>*,
             #smith-overlay>*,
-            #shop-overlay>* {
+            #shop-overlay>*,
+            #inventory-overlay>*,
+            #stat-overlay>* {
                 max-width: 95%;
-                max-height: 90%;
+                margin: 0 auto;
             }
 
             /* Responsive Stat Panel (Bottom Panel 1) */
@@ -293,17 +295,9 @@
                 box-sizing: border-box;
             }
 
-            /* Make buttons bigger slightly */
             .btn-small {
                 padding: 10px 15px;
                 font-size: 14px;
-            }
-
-            /* Center visual elements */
-            #enemy-container {
-                top: 45% !important;
-                /* Adjust visual center */
-                transform: translate(-50%, -50%) !important;
             }
         }
 
@@ -621,23 +615,20 @@
             font-size: 12px;
         }
 
-        /* 2D UI Layers */
+        /* 2D UI Layers - Enemy Container (Always Centered) */
         #enemy-container {
             position: absolute;
-            top: 100px;
-            /* Lower it a bit */
+            top: 40%;
+            /* Slightly above center for visual balance */
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             z-index: 10;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* True Centering */
             width: auto;
-            /* Let it fit content */
             pointer-events: none;
-            /* Don't block clicks */
         }
 
         /* Enemy Appearance Animation (Zoom In) */
