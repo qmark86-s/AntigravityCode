@@ -4872,7 +4872,7 @@
 
                 // Tunnel Dimensions
                 const tunnelLength = 120; // Long enough to cover view
-                const tunnelWidth = 20;
+                const tunnelWidth = 13; // Reduced from 20 (0.66x) per user request
                 const tunnelHeight = 12; // -2 to 10
                 const centerZ = -50; // Center point of tunnel
 
@@ -5272,12 +5272,20 @@
                 const applyTex = (mesh, filename, repeatX, repeatY, colorTint) => {
                     if (!mesh || !this.textureLoader) return;
 
+                    // Preserve previous offset for seamless transitions
+                    const prevOffset = (mesh.material && mesh.material.map)
+                        ? mesh.material.map.offset.clone()
+                        : new THREE.Vector2(0, 0);
+
                     const fullPath = basePath + filename;
                     this.textureLoader.load(fullPath, (tex) => {
                         tex.colorSpace = THREE.SRGBColorSpace;
                         tex.wrapS = THREE.RepeatWrapping;
                         tex.wrapT = THREE.RepeatWrapping;
                         tex.repeat.set(repeatX, repeatY);
+
+                        // Apply preserved offset for continuity
+                        tex.offset.copy(prevOffset);
 
                         // Anisotropy for sharp angles
                         if (this.renderer.capabilities.getMaxAnisotropy) {
