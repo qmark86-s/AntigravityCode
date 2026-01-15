@@ -68,6 +68,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* Phase 7: Safe Area for notched devices */
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
             margin: 0;
             padding: 20px;
             user-select: none;
@@ -117,13 +122,28 @@
         /* Responsive Layout - Tablet & Mobile */
         @media (max-width: 900px) {
             #game-container {
-                width: 90vw;
-                height: calc(90vw * 0.625);
+                width: 100vw;
+                height: calc(100vw * 0.625);
+                border-radius: 0;
+                max-width: 100vw;
             }
 
             #ui-panel {
-                width: 90vw;
+                width: 100vw;
+                padding-left: env(safe-area-inset-left, 10px);
+                padding-right: env(safe-area-inset-right, 10px);
             }
+
+            /* Phase 7: Button anchoring for mobile */
+            .ally-btn {
+                bottom: calc(10px + env(safe-area-inset-bottom, 0));
+            }
+
+            #stage-display-bar {
+                /* Ensure bar is above safe area */
+                top: env(safe-area-inset-top, 0);
+            }
+        }
         }
 
         @media (max-width: 600px) {
@@ -1575,7 +1595,7 @@
         <!-- Enemy Container (Legacy Structure for JS compatibility) -->
         <button id="btn-home" onclick="game.confirmHome()">🏠</button>
         <div id="enemy-container">
-            <div id="enemy-hud">STAGE <span id="hud-stage">1</span> <span id="hud-name">적</span></div>
+            <!-- Legacy enemy-hud removed: now handled by top stage display bar -->
             <div id="enemy-content">
                 <div id="enemy-emoji"></div>
                 <img id="enemy-img" src="" alt="enemy">
@@ -2916,14 +2936,15 @@
                     // Assuming images for most monsters.
                 }
 
-                document.getElementById('hud-name').innerText = this.e.name;
+                // Legacy hud-name/hud-stage removed (Phase 7) - now using top bar
+                // document.getElementById('hud-name').innerText = this.e.name;
                 let stageText = `${this.currentWorld}-${this.currentDisplayStage}`;
                 if (this.isBossStage) {
                     stageText += " Boss Stage";
                 } else {
                     stageText += ` Wave ${this.currentWave}/10`;
                 }
-                document.getElementById('hud-stage').innerText = stageText;
+                // document.getElementById('hud-stage').innerText = stageText;
 
                 this.updateEHp();
 
@@ -5410,30 +5431,17 @@
                     this.setAnimation('Idle');
                 }
 
-                // Phase 6: Camera Shake Effect
+                // Phase 6: Camera Shake Effect (Fixed Phase 7: No Drift)
+                // Always reset to base position first
+                this.camera.position.copy(this.baseCamPos);
+
                 if (this.shake > 0) {
                     const shakeAmount = this.shake * 0.5;
                     this.camera.position.x += (Math.random() - 0.5) * shakeAmount;
                     this.camera.position.y += (Math.random() - 0.5) * shakeAmount;
                     this.camera.position.z += (Math.random() - 0.5) * shakeAmount;
                     this.shake -= delta * 2.0; // Decay
-                    if (this.shake < 0) {
-                        this.shake = 0;
-                        // Reset camera position logic if needed, but since it's random noise 
-                        // and camera moves with scroll/OrbitControls... 
-                        // Actually, Game3D uses fixed camera usually.
-                        // Let's ensure it resets to (0, 1.6, 3) + noise.
-                        // But wait, user might have orbit controls?
-                        // If static camera, we should restore original.
-                        // Ideally: this.camera.position.copy(this.baseCamPos).add(shakeOffset)
-                    }
-                }
-
-                // Restore camera base position loosely if not shaking (simple drift fix)
-                if (this.shake <= 0) {
-                    // Check if we need to reset. 
-                    // Assuming fixed camera: this.camera.position.set(0, 1.6, 3);
-                    // But let's check init first.
+                    if (this.shake < 0) this.shake = 0;
                 }
 
                 // Phase 2: Animate atmospheric particles (always animate, not just in battle)
