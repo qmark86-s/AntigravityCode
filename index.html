@@ -218,23 +218,7 @@
             }
 
             /* UI Panel floats at bottom */
-            #ui-panel {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                z-index: 900;
-                padding-bottom: calc(10px + env(safe-area-inset-bottom, 5px));
-                background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-                pointer-events: none;
-                /* Let clicks pass through transparent parts */
-                box-sizing: border-box;
-            }
-
-            #ui-panel>* {
-                pointer-events: auto;
-                /* Re-enable for buttons */
-            }
+            /* UI Panel - Unified HUD handles this globally now */
 
             /* Log Box Repositioning - Top Left below Stage Bar */
             #log-box {
@@ -747,120 +731,166 @@
             line-height: 1.4;
         }
 
+        /* UI Panel - Unified Full Width HUD */
         #ui-panel {
-            position: fixed;
-            bottom: 10px;
-            left: 0;
-            width: 100%;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            /* Force full width */
             display: flex;
             justify-content: center;
-            pointer-events: none;
             z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            /* Full Width Background Gradient - Matches Top Bar Style */
+            background: linear-gradient(to top, rgba(10, 10, 20, 0.98), rgba(26, 26, 46, 0.95)) !important;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5),
+                0 0 15px rgba(102, 126, 234, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 0 !important;
         }
 
         .ui-panel-content {
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #444;
-            border-radius: 12px;
-            padding: 8px 12px;
+            /* Now acts as a centered container WITHIN the full bar */
+            width: 100%;
+            max-width: 1000px !important;
+            /* Increased from 650px to allow spreading */
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            width: 95%;
-            max-width: 650px;
-            pointer-events: auto;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
+            gap: 20px;
             color: white;
+            /* Remove bubble styles */
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
         }
 
         /* Player Info Section */
         .ui-panel-content .player-info {
             display: flex;
             flex-direction: column;
-            gap: 3px;
-            min-width: 90px;
+            gap: 4px;
+            flex: 1;
+            /* Allow to grow */
+            min-width: 120px;
         }
 
         .ui-panel-content .player-info .level-hp {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 11px;
+            gap: 10px;
+            font-size: 13px;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         .ui-panel-content .exp-bar-container {
             width: 100%;
-            height: 5px;
-            background: #333;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
             overflow: hidden;
         }
 
         .ui-panel-content .exp-text {
-            font-size: 9px;
-            color: #888;
+            font-size: 10px;
+            color: #aaa;
         }
 
-        /* Weapon/Gold Section */
+        /* Weapon Info Middle Section */
         .ui-panel-content .weapon-info {
             display: flex;
             flex-direction: column;
+            /* Stacked */
             align-items: center;
-            gap: 2px;
-            border-left: 1px solid #444;
-            border-right: 1px solid #444;
-            padding: 0 12px;
-            min-width: 80px;
+            justify-content: center;
+            gap: 4px;
+            padding: 0 20px;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            flex: 1;
+            white-space: nowrap;
         }
 
         .ui-panel-content .weapon-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ecf0f1;
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: bold;
+            gap: 6px;
         }
 
         .ui-panel-content .currency {
+            font-size: 11px;
             display: flex;
-            gap: 8px;
-            font-size: 10px;
+            gap: 10px;
         }
 
         /* Menu Grid */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
+            gap: 6px;
         }
 
         .btn-menu {
-            background: linear-gradient(180deg, #3a3a3a, #252525);
-            border: 1px solid #555;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
             border-radius: 6px;
-            color: #fff;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 6px 8px;
+            font-size: 11px;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s;
             white-space: nowrap;
-            min-width: 36px;
         }
 
         .btn-menu:hover {
-            background: linear-gradient(180deg, #4a4a4a, #353535);
-            border-color: #777;
-            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Mobile specific adjustments for the new HUD */
+        @media (max-width: 600px) {
+            .ui-panel-content {
+                gap: 10px;
+                padding: 8px 10px;
+            }
+
+            .ui-panel-content .weapon-info {
+                display: none;
+                /* Hide middle section on very small screens to save space? Or compact it? */
+                /* Let's keep it but make it smaller or remove borders */
+                border: none;
+                padding: 0 5px;
+            }
+
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+                /* Keep 3x2 */
+                gap: 4px;
+            }
+
+            .btn-menu {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
         }
 
         .btn-menu:active {
-            transform: translateY(0);
-            background: linear-gradient(180deg, #252525, #1a1a1a);
+            transform: translateY(1px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
         }
+
+        /* End of btn-menu styles */
 
         /* Responsive: Tablet */
         @media (max-width: 650px) {
@@ -885,49 +915,52 @@
 
         /* Responsive: Mobile */
         @media (max-width: 480px) {
-            #ui-panel {
-                bottom: 5px;
-            }
-
-            .ui-panel-content {
-                flex-direction: column;
-                gap: 6px;
-                padding: 8px;
-            }
-
-            .ui-panel-content .player-info {
-                flex-direction: row;
-                align-items: center;
-                gap: 10px;
-                width: 100%;
-            }
-
-            .ui-panel-content .weapon-info {
-                flex-direction: row;
-                border: none;
-                padding: 0;
-                gap: 10px;
-                width: 100%;
-                justify-content: center;
-            }
-
-            .menu-grid {
-                grid-template-columns: repeat(6, 1fr);
-                width: 100%;
-            }
+            /* Handled by global HUD style now */
 
             .btn-menu {
-                font-size: 8px;
-                padding: 4px 2px;
-                min-width: 0;
+                padding: 4px;
             }
+        }
 
-            /* Stat panel adjustments for mobile */
-            #stat-panel {
-                bottom: 100px;
-                padding: 5px;
-                font-size: 8px;
-            }
+        .ui-panel-content {
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px;
+        }
+
+        .ui-panel-content .player-info {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .ui-panel-content .weapon-info {
+            flex-direction: row;
+            border: none;
+            padding: 0;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .menu-grid {
+            grid-template-columns: repeat(6, 1fr);
+            width: 100%;
+        }
+
+        .btn-menu {
+            font-size: 8px;
+            padding: 4px 2px;
+            min-width: 0;
+        }
+
+        /* Stat panel adjustments for mobile */
+        #stat-panel {
+            bottom: 100px;
+            padding: 5px;
+            font-size: 8px;
+        }
         }
 
         #start-screen {
