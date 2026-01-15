@@ -2260,27 +2260,28 @@
 
     <script>
         // ===== VIEWPORT SCALING SYSTEM =====
-        // "Letterbox Scaling" - Game scales to fit any screen while maintaining aspect ratio
-        // Changed from 800x600 to 400x300 for 2x larger mobile display
+        // "Letterbox Scaling" with padding - fills screen minus safe padding
         const DESIGN_WIDTH = 400;
         const DESIGN_HEIGHT = 300;
+        const VIEWPORT_PADDING = 20; // Padding on all sides (adjustable)
 
         function updateViewportScale() {
             const container = document.getElementById('game-container');
             if (!container) return;
 
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+            // Available space = viewport minus padding
+            const availableWidth = window.innerWidth - (VIEWPORT_PADDING * 2);
+            const availableHeight = window.innerHeight - (VIEWPORT_PADDING * 2);
 
             // Calculate scale to fit while maintaining aspect ratio
-            const scaleX = viewportWidth / DESIGN_WIDTH;
-            const scaleY = viewportHeight / DESIGN_HEIGHT;
+            const scaleX = availableWidth / DESIGN_WIDTH;
+            const scaleY = availableHeight / DESIGN_HEIGHT;
             const scale = Math.min(scaleX, scaleY);
 
             // Apply scale transform
             container.style.transform = `scale(${scale})`;
 
-            console.log(`📐 Viewport Scaling: ${viewportWidth}x${viewportHeight} → scale=${scale.toFixed(3)}`);
+            console.log(`📐 Viewport: ${window.innerWidth}x${window.innerHeight}, padding=${VIEWPORT_PADDING}, scale=${scale.toFixed(3)}`);
         }
 
         // Apply on load and resize
