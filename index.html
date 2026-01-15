@@ -115,7 +115,8 @@
 
         /* ===== VIEWPORT SCALING SYSTEM ===== */
         /* 
-         * Letterbox Scaling: Game designed at 800x600, scaled to fit any screen.
+         * Letterbox Scaling: Game designed at 400x300, scaled to fit any screen.
+         * This results in 2x larger content on mobile vs 800x600.
          * JavaScript calculates scale factor, CSS applies transform.
          */
 
@@ -135,10 +136,10 @@
             z-index: 0;
         }
 
-        /* Game Container - Fixed Design Resolution */
+        /* Game Container - Fixed Design Resolution (400x300 for mobile-friendly scale) */
         #game-container {
-            width: 800px;
-            height: 600px;
+            width: 400px;
+            height: 300px;
             position: relative;
             overflow: hidden;
             background: transparent;
@@ -153,34 +154,43 @@
             left: 0;
             width: 100%;
             z-index: 900;
-            padding: 10px;
+            padding: 5px 8px;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
             box-sizing: border-box;
+            font-size: 10px;
+        }
+
+        #ui-panel .btn-small {
+            padding: 4px 6px;
+            font-size: 9px;
         }
 
         /* Stat Panel - Above UI Panel */
         #stat-panel {
             position: absolute;
-            bottom: 60px;
+            bottom: 45px;
             left: 0;
             width: 100%;
-            padding: 10px;
+            padding: 5px;
             background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
-            border-top: 2px solid #0f3460;
+            border-top: 1px solid #0f3460;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
+            gap: 4px;
             box-sizing: border-box;
             z-index: 850;
+            font-size: 9px;
         }
 
         /* Stage Bar - Top of game container */
         #stage-display-bar {
             position: absolute;
-            top: 10px;
+            top: 5px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
+            font-size: 11px;
+            padding: 4px 12px;
         }
 
         /* Responsive Layout - Tablet & Mobile (Standardized) */
@@ -2251,8 +2261,9 @@
     <script>
         // ===== VIEWPORT SCALING SYSTEM =====
         // "Letterbox Scaling" - Game scales to fit any screen while maintaining aspect ratio
-        const DESIGN_WIDTH = 800;
-        const DESIGN_HEIGHT = 600;
+        // Changed from 800x600 to 400x300 for 2x larger mobile display
+        const DESIGN_WIDTH = 400;
+        const DESIGN_HEIGHT = 300;
 
         function updateViewportScale() {
             const container = document.getElementById('game-container');
