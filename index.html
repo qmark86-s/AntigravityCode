@@ -1337,23 +1337,12 @@
             }
         }
 
-        #game-container.shake {
+        /* Shake applied to game canvas wrapper, not game-container (preserves scale) */
+        #game-canvas.shake {
             animation: shake 0.3s ease-in-out;
         }
 
-        /* 스탯 패널 */
-        #stat-panel {
-            width: 800px;
-            margin-top: 10px;
-            padding: 15px;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border: 2px solid #0f3460;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            box-sizing: border-box;
-        }
+        /* Stat Panel styles moved to viewport scaling section */
 
         .stat-box {
             background: rgba(0, 0, 0, 0.4);
