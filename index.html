@@ -158,6 +158,11 @@
             background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
             box-sizing: border-box;
             font-size: 10px;
+            /* Flexbox layout */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
         #ui-panel .btn-small {
@@ -2179,8 +2184,7 @@
 
         <!-- Duplicates removed -->
 
-        <div id="ui-panel"
-            style="display:flex;justify-content:space-between;align-items:center;gap:20px;padding:10px 15px;">
+        <div id="ui-panel">
             <!-- 1. 왼쪽 그룹: 캐릭터 정보 (LV/HP + EXP 바) -->
             <div style="display:flex;flex-direction:column;gap:5px;min-width:200px;">
                 <!-- 상단: LV / HP -->
