@@ -113,39 +113,74 @@
             overflow-y: auto;
         }
 
-        /* ===== GAME CONTAINER (Mobile-First: Full Screen) ===== */
-        #game-container {
+        /* ===== VIEWPORT SCALING SYSTEM ===== */
+        /* 
+         * Letterbox Scaling: Game designed at 800x600, scaled to fit any screen.
+         * JavaScript calculates scale factor, CSS applies transform.
+         */
+
+        /* Scaler Wrapper - Centers and scales the game */
+        #game-scaler {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
             overflow: hidden;
-            background: transparent;
-            z-index: 1;
-            /* No border/shadow on mobile for edge-to-edge */
+            z-index: 0;
         }
 
-        /* Desktop: Add decorative border */
-        @media (min-width: 1025px) {
-            #game-container {
-                position: relative;
-                width: 800px;
-                height: 500px;
-                border: 4px solid #444;
-                border-radius: 8px;
-                box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-                margin: 20px auto;
-            }
+        /* Game Container - Fixed Design Resolution */
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            transform-origin: center center;
+            /* Scale applied by JavaScript */
+        }
 
-            body {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 20px;
-                overflow: auto;
-            }
+        /* UI Panel - Fixed at bottom of game container */
+        #ui-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 900;
+            padding: 10px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            box-sizing: border-box;
+        }
+
+        /* Stat Panel - Above UI Panel */
+        #stat-panel {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
+            border-top: 2px solid #0f3460;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            box-sizing: border-box;
+            z-index: 850;
+        }
+
+        /* Stage Bar - Top of game container */
+        #stage-display-bar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
         }
 
         /* Responsive Layout - Tablet & Mobile (Standardized) */
@@ -1703,522 +1738,556 @@
 </head>
 
 <body>
-    <div id="game-container">
-        <!-- 3D Canvas (Background) -->
-        <div id="game-canvas"></div>
+    <!-- Viewport Scaler Wrapper -->
+    <div id="game-scaler">
+        <div id="game-container">
+            <!-- 3D Canvas (Background) -->
+            <div id="game-canvas"></div>
 
-        <!-- Old Tunnel (Hidden but kept for now) -->
-        <div class="tunnel-container">
-            <div class="wall-left face"></div>
-            <div class="wall-right face"></div>
-            <div class="floor face"></div>
-            <div class="ceiling face"></div>
-        </div>
-
-        <!-- Enemy Container (Legacy Structure for JS compatibility) -->
-        <button id="btn-home" onclick="game.confirmHome()">🏠</button>
-        <div id="enemy-container">
-            <!-- Legacy enemy-hud removed: now handled by top stage display bar -->
-            <div id="enemy-content">
-                <div id="enemy-emoji"></div>
-                <img id="enemy-img" src="" alt="enemy">
+            <!-- Old Tunnel (Hidden but kept for now) -->
+            <div class="tunnel-container">
+                <div class="wall-left face"></div>
+                <div class="wall-right face"></div>
+                <div class="floor face"></div>
+                <div class="ceiling face"></div>
             </div>
-            <div id="hp-bar-enemy">
-                <div id="hp-fill-enemy"></div>
-            </div>
-        </div>
 
-        <!-- Player Hands (Legacy Structure for JS compatibility) -->
-        <div id="hands">
-            <!-- Left hand placeholder if needed, or just right hand as per legacy -->
-            <div id="right-hand" class="hand-slot">
-                <span id="hand-emoji">👊</span>
-                <img id="hand-img" class="hand-img" style="display:none;">
-            </div>
-        </div>
-
-        <!-- Slot Selection Screen -->
-        <!-- Slot Selection Screen -->
-        <!-- Slot Selection Screen -->
-        <div id="slot-select-screen" style="display:flex;">
-            <button class="btn-close-slot" onclick="game.closeSlotScreen()"
-                style="position: absolute; top: 20px; right: 20px; font-size: 24px; background: transparent; border: none; color: white; cursor: pointer;">✕</button>
-            <h1>Select Save Slot</h1>
-            <div class="slot-container">
-                <div id="slot-1-card"></div>
-                <div id="slot-2-card"></div>
-                <div id="slot-3-card"></div>
-            </div>
-        </div>
-
-        <!-- Persistent Stage Display Bar with Wave and Monster Info -->
-        <div id="stage-display-bar">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 18px;">⚔️</span>
-                <span id="stage-display-text" style="font-weight: 600; font-size: 16px;">STAGE 1-1</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span id="stage-wave-info"
-                    style="font-weight: 500; font-size: 14px; color: rgba(255, 255, 255, 0.9);">Wave 1/10</span>
-                <span style="color: rgba(255, 255, 255, 0.5);">•</span>
-                <span id="stage-monster-name" style="font-weight: 500; font-size: 14px; color: #FFD700;">슬라임</span>
-            </div>
-        </div>
-        <!-- Party Slots (UI Buttons) -->
-        <div id="ally-slot-left" class="ally-btn" style="left: 20px;"></div>
-        <div id="ally-slot-right" class="ally-btn" style="right: 20px;"></div>
-
-        <div id="start-screen" style="display:none;">
-            <h1 style="font-size:48px;text-shadow:0 0 20px #e74c3c">⚔️ Weapon Master</h1>
-            <p style="color:#888">v2.3 - 3D Resources</p>
-            <button class="big-btn" onclick="game.start()">🎮 모험 시작</button>
-        </div>
-
-        <!-- Missing Log Box Restored -->
-        <div id="log-box"></div>
-
-
-
-
-        <!-- 커스텀 확인 모달 -->
-        <div id="confirm-modal"
-            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;">
-            <div
-                style="background:linear-gradient(180deg,#2a2a3d,#1a1a2e);padding:30px;border-radius:15px;border:2px solid #8b5cf6;max-width:400px;text-align:center;box-shadow:0 0 30px rgba(139,92,246,0.5);">
-                <div id="modal-title" style="font-size:20px;font-weight:bold;color:#fff;margin-bottom:15px;"></div>
-                <div id="modal-message" style="color:#ccc;margin-bottom:25px;white-space:pre-line;line-height:1.6;">
+            <!-- Enemy Container (Legacy Structure for JS compatibility) -->
+            <button id="btn-home" onclick="game.confirmHome()">🏠</button>
+            <div id="enemy-container">
+                <!-- Legacy enemy-hud removed: now handled by top stage display bar -->
+                <div id="enemy-content">
+                    <div id="enemy-emoji"></div>
+                    <img id="enemy-img" src="" alt="enemy">
                 </div>
-                <div id="modal-buttons" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                    <!-- 버튼들이 동적으로 생성됨 -->
-                </div>
-            </div>
-        </div>
-
-        <div id="settings-overlay">
-            <h1>⚙️ 설정</h1>
-
-            <!-- 캐릭터 슬롯 섹션 -->
-            <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
-                <h2>💾 캐릭터 슬롯</h2>
-                <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
-                <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
-                    <!-- JS populated via game.updateSettingsSlotUI -->
+                <div id="hp-bar-enemy">
+                    <div id="hp-fill-enemy"></div>
                 </div>
             </div>
 
-            <!-- 게임 설정 섹션 -->
-            <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
-                <h2>🎮 게임 설정</h2>
-                <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
-                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                        <input type="checkbox" id="opt-autosave" checked
-                            onchange="game.autoSave = this.checked; game.saveProgress();">
-                        💾 자동저장
-                    </label>
-                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                        <input type="checkbox" id="opt-dmgtext" checked
-                            onchange="game.showDamageText = this.checked; game.saveProgress();">
-                        💥 데미지 텍스트 표시
-                    </label>
+            <!-- Player Hands (Legacy Structure for JS compatibility) -->
+            <div id="hands">
+                <!-- Left hand placeholder if needed, or just right hand as per legacy -->
+                <div id="right-hand" class="hand-slot">
+                    <span id="hand-emoji">👊</span>
+                    <img id="hand-img" class="hand-img" style="display:none;">
                 </div>
-                <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️ 캐릭터
-                    초기화</button>
             </div>
 
-            <!-- 리소스 설정 섹션 -->
-            <div style="margin:20px 0">
-                <h2>🗡️ 무기</h2>
-                <div id="set-weapons"></div>
-                <h2>👾 몬스터</h2>
-                <div id="set-monsters"></div>
-                <h2>🌄 배경</h2>
-                <div id="set-backgrounds"></div>
+            <!-- Slot Selection Screen -->
+            <!-- Slot Selection Screen -->
+            <!-- Slot Selection Screen -->
+            <div id="slot-select-screen" style="display:flex;">
+                <button class="btn-close-slot" onclick="game.closeSlotScreen()"
+                    style="position: absolute; top: 20px; right: 20px; font-size: 24px; background: transparent; border: none; color: white; cursor: pointer;">✕</button>
+                <h1>Select Save Slot</h1>
+                <div class="slot-container">
+                    <div id="slot-1-card"></div>
+                    <div id="slot-2-card"></div>
+                    <div id="slot-3-card"></div>
+                </div>
             </div>
-            <button class="btn-save" onclick="settings.save()">💾 리소스 저장</button>
-            <button class="btn-reset" onclick="settings.reset()">🔄 리소스 초기화</button>
-            <button class="btn-small" style="margin-top:20px" onclick="settings.close()">닫기</button>
-        </div>
 
-        <div id="shop-overlay">
-            <div class="shop-window overlay-window" style="width:500px;max-height:70vh;overflow-y:auto;">
-                <h2 style="color:#f1c40f">⛺ 상점</h2>
-                <p>골드: <span id="shop-gold">0</span> G</p>
-
-                <!-- 현재 장비 상태 -->
-                <div style="background:rgba(0,0,0,0.5);padding:10px;border-radius:8px;margin-bottom:15px;">
-                    <div style="font-size:14px;color:#888;margin-bottom:5px;">현재 장비</div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span id="shop-weapon-icon" style="font-size:40px;">👊</span>
-                        <div>
-                            <div id="shop-weapon-name" style="font-weight:bold;">맨주먹</div>
-                            <div id="shop-weapon-atk" style="color:#e74c3c;font-size:12px;">공격력 +0</div>
-                        </div>
-                    </div>
+            <!-- Persistent Stage Display Bar with Wave and Monster Info -->
+            <div id="stage-display-bar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 18px;">⚔️</span>
+                    <span id="stage-display-text" style="font-weight: 600; font-size: 16px;">STAGE 1-1</span>
                 </div>
-
-                <!-- 탭 버튼 -->
-                <div style="display:flex;gap:5px;margin-bottom:10px;">
-                    <button class="btn-small shop-tab active" onclick="game.switchShopTab('items')">💪 능력치</button>
-                    <button class="btn-small shop-tab" onclick="game.switchShopTab('weapons')">🗡️ 무기</button>
-                    <button class="btn-small shop-tab" onclick="game.switchShopTab('speed')">⚡ 배속</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="stage-wave-info"
+                        style="font-weight: 500; font-size: 14px; color: rgba(255, 255, 255, 0.9);">Wave 1/10</span>
+                    <span style="color: rgba(255, 255, 255, 0.5);">•</span>
+                    <span id="stage-monster-name" style="font-weight: 500; font-size: 14px; color: #FFD700;">슬라임</span>
                 </div>
-
-                <!-- 능력치 탭 -->
-                <div id="shop-items-tab">
-                    <div class="shop-item" onclick="game.buy('hpBoost')"><span>❤️ 최대체력 +25</span><span
-                            id="shop-cost-hpBoost">100G</span></div>
-                    <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span
-                            id="shop-cost-atk">100G</span></div>
-                    <div class="shop-item" onclick="game.buy('aspd')"><span>⚡ 공격속도 +0.1</span><span
-                            id="shop-cost-aspd">150G</span></div>
-                    <div class="shop-item" onclick="game.buy('critRate')"><span>🎯 치명타확률 +1%</span><span
-                            id="shop-cost-critRate">200G</span></div>
-                    <div class="shop-item" onclick="game.buy('critDmg')"><span>💥 치명타배수 +10%</span><span
-                            id="shop-cost-critDmg">250G</span></div>
-                </div>
-
-                <!-- 무기 탭 -->
-                <div id="shop-weapons-tab" style="display:none;max-height:250px;overflow-y:auto;">
-                    <!-- 동적 생성 -->
-                </div>
-
-                <!-- 배속 탭 -->
-                <div id="shop-speed-tab" style="display:none;">
-                    <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin-bottom:10px;">
-                        <div style="color:#00bcd4;font-weight:bold;">현재 배속: <span id="shop-current-speed">1.0x</span>
-                        </div>
-                    </div>
-
-                    <div style="color:#f1c40f;font-weight:bold;margin:10px 0;">💎 다이아 배속 (영구)</div>
-                    <div id="speed-diamond-2x" class="shop-item" onclick="game.buyDiamondSpeed(1)">
-                        <span>🚀 2배속</span><span>500💎</span>
-                    </div>
-                    <div id="speed-diamond-4x" class="shop-item" onclick="game.buyDiamondSpeed(2)">
-                        <span>⚡ 4배속</span><span>2000💎</span>
-                    </div>
-
-                    <div style="color:#f39c12;font-weight:bold;margin:15px 0 10px;">🪙 골드 배속 (누적 +10%)</div>
-                    <div id="speed-gold-upgrade" class="shop-item" onclick="game.buyGoldSpeed()">
-                        <span>🔧 배속 강화 <span id="speed-gold-level">Lv.0/5</span></span>
-                        <span id="speed-gold-price">1,000G</span>
-                    </div>
-                </div>
-
-                <button class="btn-small" style="margin-top:10px;width:100%" onclick="game.closeShop()">나가기</button>
             </div>
-        </div>
+            <!-- Party Slots (UI Buttons) -->
+            <div id="ally-slot-left" class="ally-btn" style="left: 20px;"></div>
+            <div id="ally-slot-right" class="ally-btn" style="right: 20px;"></div>
 
-        <div id="stat-overlay">
-            <div class="stat-window">
-                <h2>📊 스탯 분배</h2>
-                <div class="stat-points-display">보유 포인트: <span id="avail-points">0</span></div>
-                <div class="stat-row">
-                    <div class="stat-row-info"><span class="stat-row-icon">⚔️</span><span
-                            class="stat-row-name">공격력</span>
-                    </div>
-                    <span class="stat-row-value" id="sp-atk">10</span>
-                    <span class="stat-row-invested" id="sp-atk-inv">(+0)</span>
-                    <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
-                            onclick="game.investStat('atk')">+</button></div>
-                </div>
-                <div class="stat-row">
-                    <div class="stat-row-info"><span class="stat-row-icon">❤️</span><span
-                            class="stat-row-name">최대체력</span>
-                    </div>
-                    <span class="stat-row-value" id="sp-maxHp">100</span>
-                    <span class="stat-row-invested" id="sp-maxHp-inv">(+0)</span>
-                    <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
-                            onclick="game.investStat('maxHp')">+</button></div>
-                </div>
-                <div class="stat-row">
-                    <div class="stat-row-info"><span class="stat-row-icon">⚡</span><span
-                            class="stat-row-name">공격속도</span>
-                    </div>
-                    <span class="stat-row-value" id="sp-aspd">1.00</span>
-                    <span class="stat-row-invested" id="sp-aspd-inv">(+0)</span>
-                    <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
-                            onclick="game.investStat('aspd')">+</button></div>
-                </div>
-                <div class="stat-row">
-                    <div class="stat-row-info"><span class="stat-row-icon">🎯</span><span
-                            class="stat-row-name">치명타확률</span>
-                    </div>
-                    <span class="stat-row-value" id="sp-critRate">5%</span>
-                    <span class="stat-row-invested" id="sp-critRate-inv">(+0)</span>
-                    <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
-                            onclick="game.investStat('critRate')">+</button></div>
-                </div>
-                <div class="stat-row">
-                    <div class="stat-row-info"><span class="stat-row-icon">💥</span><span
-                            class="stat-row-name">치명타배수</span>
-                    </div>
-                    <span class="stat-row-value" id="sp-critDmg">150%</span>
-                    <span class="stat-row-invested" id="sp-critDmg-inv">(+0)</span>
-                    <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
-                            onclick="game.investStat('critDmg')">+</button></div>
-                </div>
-                <button class="btn-reset-stats" onclick="game.resetStats()">🔄 스탯 초기화</button>
-                <br>
-                <button class="btn-close-stats" onclick="game.closeStatPanel()">✓ 완료</button>
+            <div id="start-screen" style="display:none;">
+                <h1 style="font-size:48px;text-shadow:0 0 20px #e74c3c">⚔️ Weapon Master</h1>
+                <p style="color:#888">v2.3 - 3D Resources</p>
+                <button class="big-btn" onclick="game.start()">🎮 모험 시작</button>
             </div>
-        </div>
 
-        <!-- 뽑기 오버레이 -->
-        <div id="gacha-overlay">
-            <div class="shop-window overlay-window"
-                style="width:500px;text-align:center;max-height:70vh;overflow-y:auto;">
-                <h2 style="color:#d35400">🔮 무기 소환</h2>
-                <div style="margin:20px 0;font-size:14px;color:#bdc3c7">
-                    <p>전설 등장 확률: <span style="color:#f1c40f">1%</span></p>
-                    <p>에픽 50회, 전설 100회 천장 시스템</p>
-                    <p>보유 다이아: <span id="gacha-diamond">0</span> 💎</p>
-                    <p style="font-size:12px;color:#888;">천장: <span id="gacha-pity">0</span>/100</p>
-                </div>
-                <div id="gacha-result" style="margin:20px 0;min-height:100px;display:none">
-                    <!-- 결과 표시 영역 -->
-                </div>
-                <div style="display:flex;gap:10px;justify-content:center">
-                    <button class="btn-save" onclick="game.doGacha(1)" style="flex:1">1회 (100💎)</button>
-                    <button class="btn-save" onclick="game.doGacha(10)" style="flex:1">10회 (900💎)</button>
-                </div>
-                <button class="btn-small" style="margin-top:20px;width:100%" onclick="game.closeGacha()">닫기</button>
-            </div>
-        </div>
+            <!-- Missing Log Box Restored -->
+            <div id="log-box"></div>
 
-        <!-- 인벤토리 오버레이 -->
-        <div id="inventory-overlay"
-            style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:500;justify-content:center;align-items:flex-start;overflow-y:auto;padding-top:30px;box-sizing:border-box;">
-            <div class="shop-window overlay-window"
-                style="width:500px;max-height:calc(100vh - 60px);overflow-y:auto;margin-bottom:30px;">
-                <h2 style="color:#8b5cf6">🎒 가방</h2>
 
-                <!-- 현재 장착 장비 -->
+
+
+            <!-- 커스텀 확인 모달 -->
+            <div id="confirm-modal"
+                style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;">
                 <div
-                    style="background:rgba(139,92,246,0.2);padding:15px;border-radius:10px;margin-bottom:15px;border:2px solid #8b5cf6;">
-                    <div style="font-size:14px;color:#888;margin-bottom:8px;">현재 장착</div>
-                    <div id="inv-equipped" style="display:flex;align-items:center;gap:10px;min-height:50px;">
-                        <!-- 장착 무기 표시 -->
+                    style="background:linear-gradient(180deg,#2a2a3d,#1a1a2e);padding:30px;border-radius:15px;border:2px solid #8b5cf6;max-width:400px;text-align:center;box-shadow:0 0 30px rgba(139,92,246,0.5);">
+                    <div id="modal-title" style="font-size:20px;font-weight:bold;color:#fff;margin-bottom:15px;"></div>
+                    <div id="modal-message" style="color:#ccc;margin-bottom:25px;white-space:pre-line;line-height:1.6;">
+                    </div>
+                    <div id="modal-buttons" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                        <!-- 버튼들이 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings-overlay">
+                <h1>⚙️ 설정</h1>
+
+                <!-- 캐릭터 슬롯 섹션 -->
+                <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
+                    <h2>💾 캐릭터 슬롯</h2>
+                    <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
+                    <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
+                        <!-- JS populated via game.updateSettingsSlotUI -->
                     </div>
                 </div>
 
-                <!-- 인벤토리 목록 -->
-                <div style="margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <span style="color:#888;">보유 장비 (<span id="inv-count">0</span>/90)</span>
-                        <select id="inv-sort" onchange="game.sortInventory(this.value)"
-                            style="padding:5px;border-radius:5px;background:#333;color:#fff;border:none;">
-                            <option value="grade">등급순</option>
-                            <option value="atk">공격력순</option>
-                            <option value="name">이름순</option>
-                        </select>
+                <!-- 게임 설정 섹션 -->
+                <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
+                    <h2>🎮 게임 설정</h2>
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="opt-autosave" checked
+                                onchange="game.autoSave = this.checked; game.saveProgress();">
+                            💾 자동저장
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="opt-dmgtext" checked
+                                onchange="game.showDamageText = this.checked; game.saveProgress();">
+                            💥 데미지 텍스트 표시
+                        </label>
                     </div>
-                    <div id="inv-list"
-                        style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:250px;overflow-y:scroll;padding-right:5px;">
-                        <!-- 인벤토리 아이템들 -->
-                    </div>
+                    <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️ 캐릭터
+                        초기화</button>
                 </div>
 
+                <!-- 리소스 설정 섹션 -->
+                <div style="margin:20px 0">
+                    <h2>🗡️ 무기</h2>
+                    <div id="set-weapons"></div>
+                    <h2>👾 몬스터</h2>
+                    <div id="set-monsters"></div>
+                    <h2>🌄 배경</h2>
+                    <div id="set-backgrounds"></div>
+                </div>
+                <button class="btn-save" onclick="settings.save()">💾 리소스 저장</button>
+                <button class="btn-reset" onclick="settings.reset()">🔄 리소스 초기화</button>
+                <button class="btn-small" style="margin-top:20px" onclick="settings.close()">닫기</button>
+            </div>
+
+            <div id="shop-overlay">
+                <div class="shop-window overlay-window" style="width:500px;max-height:70vh;overflow-y:auto;">
+                    <h2 style="color:#f1c40f">⛺ 상점</h2>
+                    <p>골드: <span id="shop-gold">0</span> G</p>
+
+                    <!-- 현재 장비 상태 -->
+                    <div style="background:rgba(0,0,0,0.5);padding:10px;border-radius:8px;margin-bottom:15px;">
+                        <div style="font-size:14px;color:#888;margin-bottom:5px;">현재 장비</div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span id="shop-weapon-icon" style="font-size:40px;">👊</span>
+                            <div>
+                                <div id="shop-weapon-name" style="font-weight:bold;">맨주먹</div>
+                                <div id="shop-weapon-atk" style="color:#e74c3c;font-size:12px;">공격력 +0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 탭 버튼 -->
+                    <div style="display:flex;gap:5px;margin-bottom:10px;">
+                        <button class="btn-small shop-tab active" onclick="game.switchShopTab('items')">💪 능력치</button>
+                        <button class="btn-small shop-tab" onclick="game.switchShopTab('weapons')">🗡️ 무기</button>
+                        <button class="btn-small shop-tab" onclick="game.switchShopTab('speed')">⚡ 배속</button>
+                    </div>
+
+                    <!-- 능력치 탭 -->
+                    <div id="shop-items-tab">
+                        <div class="shop-item" onclick="game.buy('hpBoost')"><span>❤️ 최대체력 +25</span><span
+                                id="shop-cost-hpBoost">100G</span></div>
+                        <div class="shop-item" onclick="game.buy('upgrade')"><span>💪 공격력 +5</span><span
+                                id="shop-cost-atk">100G</span></div>
+                        <div class="shop-item" onclick="game.buy('aspd')"><span>⚡ 공격속도 +0.1</span><span
+                                id="shop-cost-aspd">150G</span></div>
+                        <div class="shop-item" onclick="game.buy('critRate')"><span>🎯 치명타확률 +1%</span><span
+                                id="shop-cost-critRate">200G</span></div>
+                        <div class="shop-item" onclick="game.buy('critDmg')"><span>💥 치명타배수 +10%</span><span
+                                id="shop-cost-critDmg">250G</span></div>
+                    </div>
+
+                    <!-- 무기 탭 -->
+                    <div id="shop-weapons-tab" style="display:none;max-height:250px;overflow-y:auto;">
+                        <!-- 동적 생성 -->
+                    </div>
+
+                    <!-- 배속 탭 -->
+                    <div id="shop-speed-tab" style="display:none;">
+                        <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin-bottom:10px;">
+                            <div style="color:#00bcd4;font-weight:bold;">현재 배속: <span
+                                    id="shop-current-speed">1.0x</span>
+                            </div>
+                        </div>
+
+                        <div style="color:#f1c40f;font-weight:bold;margin:10px 0;">💎 다이아 배속 (영구)</div>
+                        <div id="speed-diamond-2x" class="shop-item" onclick="game.buyDiamondSpeed(1)">
+                            <span>🚀 2배속</span><span>500💎</span>
+                        </div>
+                        <div id="speed-diamond-4x" class="shop-item" onclick="game.buyDiamondSpeed(2)">
+                            <span>⚡ 4배속</span><span>2000💎</span>
+                        </div>
+
+                        <div style="color:#f39c12;font-weight:bold;margin:15px 0 10px;">🪙 골드 배속 (누적 +10%)</div>
+                        <div id="speed-gold-upgrade" class="shop-item" onclick="game.buyGoldSpeed()">
+                            <span>🔧 배속 강화 <span id="speed-gold-level">Lv.0/5</span></span>
+                            <span id="speed-gold-price">1,000G</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-small" style="margin-top:10px;width:100%" onclick="game.closeShop()">나가기</button>
+                </div>
+            </div>
+
+            <div id="stat-overlay">
+                <div class="stat-window">
+                    <h2>📊 스탯 분배</h2>
+                    <div class="stat-points-display">보유 포인트: <span id="avail-points">0</span></div>
+                    <div class="stat-row">
+                        <div class="stat-row-info"><span class="stat-row-icon">⚔️</span><span
+                                class="stat-row-name">공격력</span>
+                        </div>
+                        <span class="stat-row-value" id="sp-atk">10</span>
+                        <span class="stat-row-invested" id="sp-atk-inv">(+0)</span>
+                        <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
+                                onclick="game.investStat('atk')">+</button></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-row-info"><span class="stat-row-icon">❤️</span><span
+                                class="stat-row-name">최대체력</span>
+                        </div>
+                        <span class="stat-row-value" id="sp-maxHp">100</span>
+                        <span class="stat-row-invested" id="sp-maxHp-inv">(+0)</span>
+                        <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
+                                onclick="game.investStat('maxHp')">+</button></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-row-info"><span class="stat-row-icon">⚡</span><span
+                                class="stat-row-name">공격속도</span>
+                        </div>
+                        <span class="stat-row-value" id="sp-aspd">1.00</span>
+                        <span class="stat-row-invested" id="sp-aspd-inv">(+0)</span>
+                        <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
+                                onclick="game.investStat('aspd')">+</button></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-row-info"><span class="stat-row-icon">🎯</span><span
+                                class="stat-row-name">치명타확률</span>
+                        </div>
+                        <span class="stat-row-value" id="sp-critRate">5%</span>
+                        <span class="stat-row-invested" id="sp-critRate-inv">(+0)</span>
+                        <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
+                                onclick="game.investStat('critRate')">+</button></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-row-info"><span class="stat-row-icon">💥</span><span
+                                class="stat-row-name">치명타배수</span>
+                        </div>
+                        <span class="stat-row-value" id="sp-critDmg">150%</span>
+                        <span class="stat-row-invested" id="sp-critDmg-inv">(+0)</span>
+                        <div class="stat-row-btns"><button class="stat-btn stat-btn-add"
+                                onclick="game.investStat('critDmg')">+</button></div>
+                    </div>
+                    <button class="btn-reset-stats" onclick="game.resetStats()">🔄 스탯 초기화</button>
+                    <br>
+                    <button class="btn-close-stats" onclick="game.closeStatPanel()">✓ 완료</button>
+                </div>
+            </div>
+
+            <!-- 뽑기 오버레이 -->
+            <div id="gacha-overlay">
+                <div class="shop-window overlay-window"
+                    style="width:500px;text-align:center;max-height:70vh;overflow-y:auto;">
+                    <h2 style="color:#d35400">🔮 무기 소환</h2>
+                    <div style="margin:20px 0;font-size:14px;color:#bdc3c7">
+                        <p>전설 등장 확률: <span style="color:#f1c40f">1%</span></p>
+                        <p>에픽 50회, 전설 100회 천장 시스템</p>
+                        <p>보유 다이아: <span id="gacha-diamond">0</span> 💎</p>
+                        <p style="font-size:12px;color:#888;">천장: <span id="gacha-pity">0</span>/100</p>
+                    </div>
+                    <div id="gacha-result" style="margin:20px 0;min-height:100px;display:none">
+                        <!-- 결과 표시 영역 -->
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:center">
+                        <button class="btn-save" onclick="game.doGacha(1)" style="flex:1">1회 (100💎)</button>
+                        <button class="btn-save" onclick="game.doGacha(10)" style="flex:1">10회 (900💎)</button>
+                    </div>
+                    <button class="btn-small" style="margin-top:20px;width:100%" onclick="game.closeGacha()">닫기</button>
+                </div>
+            </div>
+
+            <!-- 인벤토리 오버레이 -->
+            <div id="inventory-overlay"
+                style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:500;justify-content:center;align-items:flex-start;overflow-y:auto;padding-top:30px;box-sizing:border-box;">
+                <div class="shop-window overlay-window"
+                    style="width:500px;max-height:calc(100vh - 60px);overflow-y:auto;margin-bottom:30px;">
+                    <h2 style="color:#8b5cf6">🎒 가방</h2>
+
+                    <!-- 현재 장착 장비 -->
+                    <div
+                        style="background:rgba(139,92,246,0.2);padding:15px;border-radius:10px;margin-bottom:15px;border:2px solid #8b5cf6;">
+                        <div style="font-size:14px;color:#888;margin-bottom:8px;">현재 장착</div>
+                        <div id="inv-equipped" style="display:flex;align-items:center;gap:10px;min-height:50px;">
+                            <!-- 장착 무기 표시 -->
+                        </div>
+                    </div>
+
+                    <!-- 인벤토리 목록 -->
+                    <div style="margin-bottom:15px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span style="color:#888;">보유 장비 (<span id="inv-count">0</span>/90)</span>
+                            <select id="inv-sort" onchange="game.sortInventory(this.value)"
+                                style="padding:5px;border-radius:5px;background:#333;color:#fff;border:none;">
+                                <option value="grade">등급순</option>
+                                <option value="atk">공격력순</option>
+                                <option value="name">이름순</option>
+                            </select>
+                        </div>
+                        <div id="inv-list"
+                            style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:250px;overflow-y:scroll;padding-right:5px;">
+                            <!-- 인벤토리 아이템들 -->
+                        </div>
+                    </div>
+
+                    <div
+                        style="display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(transparent,#1a1a2e 20%);padding-top:10px;">
+                        <button class="btn-small" style="flex:1" onclick="game.openSmith()">🔨 대장간</button>
+                        <button class="btn-small" style="flex:1" onclick="game.closeInventory()">닫기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 대장간 오버레이 -->
+            <div id="smith-overlay">
+                <div class="smith-window">
+                    <h2 style="color:#e67e22;text-align:center">🔨 대장간</h2>
+
+                    <!-- 탭 버튼 -->
+                    <div style="display:flex;gap:5px;margin-bottom:15px;">
+                        <button class="smith-tab active" onclick="game.switchSmithTab('synthesis')">⚗️ 합성</button>
+                        <button class="smith-tab" onclick="game.switchSmithTab('enhance')">⬆️ 강화</button>
+                    </div>
+
+                    <!-- 합성 탭 -->
+                    <div id="smith-synthesis-tab">
+                        <p style="text-align:center;color:#888;font-size:13px;">같은 등급 무기 3개 → 상위 등급 무기 1개</p>
+
+                        <div class="synthesis-slots">
+                            <div class="synthesis-slot" id="synth-slot-0" onclick="game.selectSynthesisSlot(0)">
+                                <span style="color:#666">+</span>
+                            </div>
+                            <div class="synthesis-slot" id="synth-slot-1" onclick="game.selectSynthesisSlot(1)">
+                                <span style="color:#666">+</span>
+                            </div>
+                            <div class="synthesis-slot" id="synth-slot-2" onclick="game.selectSynthesisSlot(2)">
+                                <span style="color:#666">+</span>
+                            </div>
+                            <span class="synthesis-arrow">→</span>
+                            <div class="synthesis-result" id="synth-result">
+                                <span style="color:#666">?</span>
+                            </div>
+                        </div>
+
+                        <div style="text-align:center;margin:10px 0;">
+                            <span id="synth-grade-info" style="color:#888;">등급을 선택하세요</span>
+                        </div>
+
+                        <!-- 합성 능력치 미리보기 -->
+                        <div id="synth-preview"
+                            style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
+                            <div style="color:#888;font-size:12px;">예상 공격력</div>
+                            <div id="synth-atk-preview" style="color:#e74c3c;font-size:18px;font-weight:bold;">+?? ~ +??
+                            </div>
+                        </div>
+
+                        <div style="text-align:center;">
+                            <span style="color:#888;">비용: </span>
+                            <span id="synth-cost" style="color:#f1c40f;">0G</span>
+                        </div>
+
+                        <div id="synth-weapon-list" class="weapon-select-grid" style="margin-top:15px;">
+                            <!-- 무기 목록 -->
+                        </div>
+
+                        <button class="btn-small" id="synth-btn" style="width:100%;margin-top:15px;background:#e67e22;"
+                            onclick="game.doSynthesis()" disabled>
+                            합성하기
+                        </button>
+                    </div>
+
+                    <!-- 강화 탭 -->
+                    <div id="smith-enhance-tab" style="display:none;">
+                        <p style="text-align:center;color:#888;font-size:13px;">무기를 강화하여 공격력을 높이세요 (+1 ~ +10)</p>
+
+                        <div class="enhance-weapon-display">
+                            <div id="enhance-weapon-icon" style="font-size:60px;">🗡️</div>
+                            <div id="enhance-weapon-name" style="font-size:18px;font-weight:bold;margin:10px 0;">무기를
+                                선택하세요
+                            </div>
+                            <div id="enhance-weapon-level" style="color:#f39c12;font-size:20px;"></div>
+                        </div>
+
+                        <div class="enhance-info">
+                            <div class="enhance-stat">
+                                <div style="color:#888;">성공률</div>
+                                <div class="enhance-stat-value enhance-success" id="enhance-rate">-</div>
+                            </div>
+                            <div class="enhance-stat">
+                                <div style="color:#888;">비용</div>
+                                <div class="enhance-stat-value" id="enhance-cost" style="color:#f1c40f;">-</div>
+                            </div>
+                            <div class="enhance-stat">
+                                <div style="color:#888;">실패 시</div>
+                                <div class="enhance-stat-value enhance-warning" id="enhance-fail">-1</div>
+                            </div>
+                        </div>
+
+                        <!-- 강화 능력치 미리보기 -->
+                        <div id="enhance-preview"
+                            style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
+                            <div style="color:#888;font-size:12px;">공격력 변화</div>
+                            <div style="display:flex;justify-content:center;align-items:center;gap:10px;">
+                                <span id="enhance-atk-current" style="color:#888;font-size:16px;">+0</span>
+                                <span style="color:#27ae60;">→</span>
+                                <span id="enhance-atk-after"
+                                    style="color:#27ae60;font-size:18px;font-weight:bold;">+0</span>
+                                <span id="enhance-atk-diff" style="color:#f39c12;font-size:12px;">(+0)</span>
+                            </div>
+                        </div>
+
+                        <div id="enhance-weapon-list" class="weapon-select-grid">
+                            <!-- 무기 목록 -->
+                        </div>
+
+                        <button class="btn-small" id="enhance-btn"
+                            style="width:100%;margin-top:15px;background:#3498db;" onclick="game.doEnhance()" disabled>
+                            강화하기
+                        </button>
+                    </div>
+
+                    <button class="btn-small" style="width:100%;margin-top:15px;"
+                        onclick="game.closeSmith()">닫기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Duplicates removed -->
+
+        <div id="ui-panel"
+            style="display:flex;justify-content:space-between;align-items:center;gap:20px;padding:10px 15px;">
+            <!-- 1. 왼쪽 그룹: 캐릭터 정보 (LV/HP + EXP 바) -->
+            <div style="display:flex;flex-direction:column;gap:5px;min-width:200px;">
+                <!-- 상단: LV / HP -->
+                <div style="display:flex;align-items:center;gap:15px;">
+                    <span>👤 Lv.<span id="ui-lv">1</span></span>
+                    <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
+                </div>
+                <!-- 하단: EXP 바 -->
                 <div
-                    style="display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(transparent,#1a1a2e 20%);padding-top:10px;">
-                    <button class="btn-small" style="flex:1" onclick="game.openSmith()">🔨 대장간</button>
-                    <button class="btn-small" style="flex:1" onclick="game.closeInventory()">닫기</button>
+                    style="background:#f0f0f0;padding:6px 10px;border-radius:5px;display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:12px;color:#333;font-weight:bold;">EXP</span>
+                    <div style="flex:1;height:10px;background:#ccc;border-radius:5px;overflow:hidden;min-width:100px;">
+                        <div id="exp-bar-fill"
+                            style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
+                        </div>
+                    </div>
+                    <span style="font-size:11px;color:#333;"><span id="ui-exp">0</span>/<span
+                            id="ui-maxexp">100</span></span>
                 </div>
             </div>
-        </div>
 
-        <!-- 대장간 오버레이 -->
-        <div id="smith-overlay">
-            <div class="smith-window">
-                <h2 style="color:#e67e22;text-align:center">🔨 대장간</h2>
-
-                <!-- 탭 버튼 -->
-                <div style="display:flex;gap:5px;margin-bottom:15px;">
-                    <button class="smith-tab active" onclick="game.switchSmithTab('synthesis')">⚗️ 합성</button>
-                    <button class="smith-tab" onclick="game.switchSmithTab('enhance')">⬆️ 강화</button>
+            <!-- 2. 중앙 그룹: 장비 및 재화 -->
+            <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
+                <!-- 상단: 현재 장착 무기 -->
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span id="ui-weapon-icon" style="font-size:20px;">🗡️</span>
+                    <span id="ui-weapon" style="font-weight:bold;">맨주먹</span>
                 </div>
-
-                <!-- 합성 탭 -->
-                <div id="smith-synthesis-tab">
-                    <p style="text-align:center;color:#888;font-size:13px;">같은 등급 무기 3개 → 상위 등급 무기 1개</p>
-
-                    <div class="synthesis-slots">
-                        <div class="synthesis-slot" id="synth-slot-0" onclick="game.selectSynthesisSlot(0)">
-                            <span style="color:#666">+</span>
-                        </div>
-                        <div class="synthesis-slot" id="synth-slot-1" onclick="game.selectSynthesisSlot(1)">
-                            <span style="color:#666">+</span>
-                        </div>
-                        <div class="synthesis-slot" id="synth-slot-2" onclick="game.selectSynthesisSlot(2)">
-                            <span style="color:#666">+</span>
-                        </div>
-                        <span class="synthesis-arrow">→</span>
-                        <div class="synthesis-result" id="synth-result">
-                            <span style="color:#666">?</span>
-                        </div>
-                    </div>
-
-                    <div style="text-align:center;margin:10px 0;">
-                        <span id="synth-grade-info" style="color:#888;">등급을 선택하세요</span>
-                    </div>
-
-                    <!-- 합성 능력치 미리보기 -->
-                    <div id="synth-preview"
-                        style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
-                        <div style="color:#888;font-size:12px;">예상 공격력</div>
-                        <div id="synth-atk-preview" style="color:#e74c3c;font-size:18px;font-weight:bold;">+?? ~ +??
-                        </div>
-                    </div>
-
-                    <div style="text-align:center;">
-                        <span style="color:#888;">비용: </span>
-                        <span id="synth-cost" style="color:#f1c40f;">0G</span>
-                    </div>
-
-                    <div id="synth-weapon-list" class="weapon-select-grid" style="margin-top:15px;">
-                        <!-- 무기 목록 -->
-                    </div>
-
-                    <button class="btn-small" id="synth-btn" style="width:100%;margin-top:15px;background:#e67e22;"
-                        onclick="game.doSynthesis()" disabled>
-                        합성하기
-                    </button>
+                <!-- 하단: 골드/다이아/배속 -->
+                <div style="display:flex;gap:15px;">
+                    <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
+                    <span style="color:#00bcd4;font-weight:bold">💎 <span id="ui-diamond">0</span></span>
+                    <span id="ui-speed" style="color:#f39c12;font-weight:bold">⚡ 1.0x</span>
                 </div>
-
-                <!-- 강화 탭 -->
-                <div id="smith-enhance-tab" style="display:none;">
-                    <p style="text-align:center;color:#888;font-size:13px;">무기를 강화하여 공격력을 높이세요 (+1 ~ +10)</p>
-
-                    <div class="enhance-weapon-display">
-                        <div id="enhance-weapon-icon" style="font-size:60px;">🗡️</div>
-                        <div id="enhance-weapon-name" style="font-size:18px;font-weight:bold;margin:10px 0;">무기를 선택하세요
-                        </div>
-                        <div id="enhance-weapon-level" style="color:#f39c12;font-size:20px;"></div>
-                    </div>
-
-                    <div class="enhance-info">
-                        <div class="enhance-stat">
-                            <div style="color:#888;">성공률</div>
-                            <div class="enhance-stat-value enhance-success" id="enhance-rate">-</div>
-                        </div>
-                        <div class="enhance-stat">
-                            <div style="color:#888;">비용</div>
-                            <div class="enhance-stat-value" id="enhance-cost" style="color:#f1c40f;">-</div>
-                        </div>
-                        <div class="enhance-stat">
-                            <div style="color:#888;">실패 시</div>
-                            <div class="enhance-stat-value enhance-warning" id="enhance-fail">-1</div>
-                        </div>
-                    </div>
-
-                    <!-- 강화 능력치 미리보기 -->
-                    <div id="enhance-preview"
-                        style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;margin:10px 0;text-align:center;display:none;">
-                        <div style="color:#888;font-size:12px;">공격력 변화</div>
-                        <div style="display:flex;justify-content:center;align-items:center;gap:10px;">
-                            <span id="enhance-atk-current" style="color:#888;font-size:16px;">+0</span>
-                            <span style="color:#27ae60;">→</span>
-                            <span id="enhance-atk-after"
-                                style="color:#27ae60;font-size:18px;font-weight:bold;">+0</span>
-                            <span id="enhance-atk-diff" style="color:#f39c12;font-size:12px;">(+0)</span>
-                        </div>
-                    </div>
-
-                    <div id="enhance-weapon-list" class="weapon-select-grid">
-                        <!-- 무기 목록 -->
-                    </div>
-
-                    <button class="btn-small" id="enhance-btn" style="width:100%;margin-top:15px;background:#3498db;"
-                        onclick="game.doEnhance()" disabled>
-                        강화하기
-                    </button>
-                </div>
-
-                <button class="btn-small" style="width:100%;margin-top:15px;" onclick="game.closeSmith()">닫기</button>
             </div>
-        </div>
-    </div>
 
-    <!-- Duplicates removed -->
-
-    <div id="ui-panel"
-        style="display:flex;justify-content:space-between;align-items:center;gap:20px;padding:10px 15px;">
-        <!-- 1. 왼쪽 그룹: 캐릭터 정보 (LV/HP + EXP 바) -->
-        <div style="display:flex;flex-direction:column;gap:5px;min-width:200px;">
-            <!-- 상단: LV / HP -->
-            <div style="display:flex;align-items:center;gap:15px;">
-                <span>👤 Lv.<span id="ui-lv">1</span></span>
-                <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
-            </div>
-            <!-- 하단: EXP 바 -->
-            <div
-                style="background:#f0f0f0;padding:6px 10px;border-radius:5px;display:flex;align-items:center;gap:10px;">
-                <span style="font-size:12px;color:#333;font-weight:bold;">EXP</span>
-                <div style="flex:1;height:10px;background:#ccc;border-radius:5px;overflow:hidden;min-width:100px;">
-                    <div id="exp-bar-fill"
-                        style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
-                    </div>
-                </div>
-                <span style="font-size:11px;color:#333;"><span id="ui-exp">0</span>/<span
-                        id="ui-maxexp">100</span></span>
+            <!-- 3. 오른쪽 그룹: 메뉴 버튼 그리드 (2줄) -->
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;">
+                <!-- 윗줄: 상점, 뽑기 -->
+                <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
+                <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
+                <!-- 아랫줄: 가방, 스탯, 설정 -->
+                <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
+                <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
+                <button class="btn-small" onclick="settings.open()" style="grid-column:span 2;">⚙️ 설정</button>
             </div>
         </div>
 
-        <!-- 2. 중앙 그룹: 장비 및 재화 -->
-        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;">
-            <!-- 상단: 현재 장착 무기 -->
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span id="ui-weapon-icon" style="font-size:20px;">🗡️</span>
-                <span id="ui-weapon" style="font-weight:bold;">맨주먹</span>
+        <div id="stat-panel">
+            <div class="stat-box stat-atk">
+                <div class="stat-icon">⚔️</div>
+                <div class="stat-name">공격력</div>
+                <div class="stat-value" id="stat-atk">10</div>
             </div>
-            <!-- 하단: 골드/다이아/배속 -->
-            <div style="display:flex;gap:15px;">
-                <span class="gold-txt">💰 <span id="ui-gold">0</span> G</span>
-                <span style="color:#00bcd4;font-weight:bold">💎 <span id="ui-diamond">0</span></span>
-                <span id="ui-speed" style="color:#f39c12;font-weight:bold">⚡ 1.0x</span>
+            <div class="stat-box stat-hp">
+                <div class="stat-icon">❤️</div>
+                <div class="stat-name">최대체력</div>
+                <div class="stat-value" id="stat-maxhp">100</div>
+            </div>
+            <div class="stat-box stat-aspd">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-name">공격속도</div>
+                <div class="stat-value" id="stat-aspd">1.00</div>
+            </div>
+            <div class="stat-box stat-crit">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-name">치명타확률</div>
+                <div class="stat-value" id="stat-crit">5.0%</div>
+            </div>
+            <div class="stat-box stat-critdmg">
+                <div class="stat-icon">💥</div>
+                <div class="stat-name">치명타배수</div>
+                <div class="stat-value" id="stat-critdmg">150%</div>
             </div>
         </div>
-
-        <!-- 3. 오른쪽 그룹: 메뉴 버튼 그리드 (2줄) -->
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;">
-            <!-- 윗줄: 상점, 뽑기 -->
-            <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
-            <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
-            <!-- 아랫줄: 가방, 스탯, 설정 -->
-            <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
-            <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
-            <button class="btn-small" onclick="settings.open()" style="grid-column:span 2;">⚙️ 설정</button>
-        </div>
-    </div>
-
-    <div id="stat-panel">
-        <div class="stat-box stat-atk">
-            <div class="stat-icon">⚔️</div>
-            <div class="stat-name">공격력</div>
-            <div class="stat-value" id="stat-atk">10</div>
-        </div>
-        <div class="stat-box stat-hp">
-            <div class="stat-icon">❤️</div>
-            <div class="stat-name">최대체력</div>
-            <div class="stat-value" id="stat-maxhp">100</div>
-        </div>
-        <div class="stat-box stat-aspd">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-name">공격속도</div>
-            <div class="stat-value" id="stat-aspd">1.00</div>
-        </div>
-        <div class="stat-box stat-crit">
-            <div class="stat-icon">🎯</div>
-            <div class="stat-name">치명타확률</div>
-            <div class="stat-value" id="stat-crit">5.0%</div>
-        </div>
-        <div class="stat-box stat-critdmg">
-            <div class="stat-icon">💥</div>
-            <div class="stat-name">치명타배수</div>
-            <div class="stat-value" id="stat-critdmg">150%</div>
-        </div>
-    </div>
+    </div><!-- end game-scaler -->
 
     <script>
+        // ===== VIEWPORT SCALING SYSTEM =====
+        // "Letterbox Scaling" - Game scales to fit any screen while maintaining aspect ratio
+        const DESIGN_WIDTH = 800;
+        const DESIGN_HEIGHT = 600;
+
+        function updateViewportScale() {
+            const container = document.getElementById('game-container');
+            if (!container) return;
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Calculate scale to fit while maintaining aspect ratio
+            const scaleX = viewportWidth / DESIGN_WIDTH;
+            const scaleY = viewportHeight / DESIGN_HEIGHT;
+            const scale = Math.min(scaleX, scaleY);
+
+            // Apply scale transform
+            container.style.transform = `scale(${scale})`;
+
+            console.log(`📐 Viewport Scaling: ${viewportWidth}x${viewportHeight} → scale=${scale.toFixed(3)}`);
+        }
+
+        // Apply on load and resize
+        window.addEventListener('resize', updateViewportScale);
+        window.addEventListener('load', updateViewportScale);
+        document.addEventListener('DOMContentLoaded', updateViewportScale);
+
         // Module Removed for file:// compatibility
         // import * as THREE from 'three';
         // import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
