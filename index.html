@@ -157,21 +157,27 @@
             font-size: 9px;
         }
 
-        /* Stat Panel - Above UI Panel */
+        /* Stat Panel - ABOVE UI Panel (fixed, higher z-index) */
         #stat-panel {
-            position: absolute;
-            bottom: 45px;
-            left: 0;
-            width: 100%;
-            padding: 5px;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
-            border-top: 1px solid #0f3460;
+            position: fixed;
+            bottom: 90px;
+            /* Above the UI panel */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            padding: 8px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+            border: 1px solid #0f3460;
+            border-radius: 10px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 4px;
             box-sizing: border-box;
-            z-index: 850;
+            z-index: 1010;
+            /* Higher than UI panel (1000) */
             font-size: 9px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         /* Stage Bar - Top of game container */
@@ -761,13 +767,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 15px;
-            width: 90%;
-            max-width: 600px;
+            gap: 10px;
+            width: 95%;
+            max-width: 700px;
             pointer-events: auto;
-            /* Re-enable clicks */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
+            font-size: clamp(9px, 2vw, 12px);
+            /* Responsive font size */
+            color: white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .ui-panel-content {
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 8px;
+            }
         }
 
         #start-screen {
