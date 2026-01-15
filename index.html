@@ -749,41 +749,184 @@
 
         #ui-panel {
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             left: 0;
             width: 100%;
             display: flex;
             justify-content: center;
             pointer-events: none;
-            /* Let clicks pass through empty space */
             z-index: 1000;
         }
 
         .ui-panel-content {
-            background: rgba(0, 0, 0, 0.85);
-            border: 2px solid #555;
-            border-radius: 15px;
-            padding: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             width: 95%;
-            max-width: 700px;
+            max-width: 650px;
             pointer-events: auto;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            font-size: clamp(9px, 2vw, 12px);
-            /* Responsive font size */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
             color: white;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
+        /* Player Info Section */
+        .ui-panel-content .player-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 90px;
+        }
+
+        .ui-panel-content .player-info .level-hp {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .ui-panel-content .exp-bar-container {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ui-panel-content .exp-text {
+            font-size: 9px;
+            color: #888;
+        }
+
+        /* Weapon/Gold Section */
+        .ui-panel-content .weapon-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            border-left: 1px solid #444;
+            border-right: 1px solid #444;
+            padding: 0 12px;
+            min-width: 80px;
+        }
+
+        .ui-panel-content .weapon-name {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .ui-panel-content .currency {
+            display: flex;
+            gap: 8px;
+            font-size: 10px;
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .btn-menu {
+            background: linear-gradient(180deg, #3a3a3a, #252525);
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            min-width: 36px;
+        }
+
+        .btn-menu:hover {
+            background: linear-gradient(180deg, #4a4a4a, #353535);
+            border-color: #777;
+            transform: translateY(-1px);
+        }
+
+        .btn-menu:active {
+            transform: translateY(0);
+            background: linear-gradient(180deg, #252525, #1a1a1a);
+        }
+
+        /* Responsive: Tablet */
+        @media (max-width: 650px) {
             .ui-panel-content {
-                flex-wrap: wrap;
+                padding: 6px 10px;
                 gap: 8px;
+            }
+
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn-menu {
+                font-size: 9px;
+                padding: 5px 6px;
+            }
+
+            .ui-panel-content .weapon-info {
+                padding: 0 8px;
+            }
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 480px) {
+            #ui-panel {
+                bottom: 5px;
+            }
+
+            .ui-panel-content {
+                flex-direction: column;
+                gap: 6px;
                 padding: 8px;
+            }
+
+            .ui-panel-content .player-info {
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .ui-panel-content .weapon-info {
+                flex-direction: row;
+                border: none;
+                padding: 0;
+                gap: 10px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .menu-grid {
+                grid-template-columns: repeat(6, 1fr);
+                width: 100%;
+            }
+
+            .btn-menu {
+                font-size: 8px;
+                padding: 4px 2px;
+                min-width: 0;
+            }
+
+            /* Stat panel adjustments for mobile */
+            #stat-panel {
+                bottom: 100px;
+                padding: 5px;
+                font-size: 8px;
             }
         }
 
@@ -2241,37 +2384,33 @@
 
         <div id="ui-panel">
             <div class="ui-panel-content">
-                <!-- 1. Stats Group -->
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <div style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:bold;">
+                <!-- Player Info -->
+                <div class="player-info">
+                    <div class="level-hp">
                         <span>Lv.<span id="ui-lv">1</span></span>
                         <span style="color:#e74c3c">♥ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
                     </div>
-                    <!-- EXP Bar -->
-                    <div style="width:100%;height:6px;background:#444;border-radius:3px;overflow:hidden;">
+                    <div class="exp-bar-container">
                         <div id="exp-bar-fill" style="width:0%;height:100%;background:#3498db;transition:width 0.3s;">
                         </div>
                     </div>
-                    <div style="font-size:10px;color:#aaa;">EXP <span id="ui-exp">0</span> / <span
-                            id="ui-maxexp">100</span></div>
+                    <div class="exp-text">EXP <span id="ui-exp">0</span> / <span id="ui-maxexp">100</span></div>
                 </div>
 
-                <!-- 2. Weapon & Gold -->
-                <div
-                    style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;border-left:1px solid #444;border-right:1px solid #444;padding:0 10px;">
-                    <div style="display:flex;align-items:center;gap:4px;">
+                <!-- Weapon & Currency -->
+                <div class="weapon-info">
+                    <div class="weapon-name">
                         <span id="ui-weapon-icon">🗡️</span>
-                        <span id="ui-weapon" style="font-size:11px;font-weight:bold;white-space:nowrap;">Wooden
-                            Sword</span>
+                        <span id="ui-weapon">Wooden Sword</span>
                     </div>
-                    <div style="display:flex;gap:10px;font-size:11px;color:#f1c40f;">
-                        <span>💰 <span id="ui-gold">0</span></span>
+                    <div class="currency">
+                        <span style="color:#f1c40f">💰 <span id="ui-gold">0</span></span>
                         <span style="color:#3498db">💎 <span id="ui-diamond">0</span></span>
                     </div>
                 </div>
 
-                <!-- 3. Menu Buttons -->
-                <div class="menu-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:5px;">
+                <!-- Menu Buttons -->
+                <div class="menu-grid">
                     <button class="btn-menu" onclick="game.openShop()">상점</button>
                     <button class="btn-menu" onclick="game.openGacha()">뽑기</button>
                     <button class="btn-menu"
