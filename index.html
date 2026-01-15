@@ -121,49 +121,36 @@
          */
 
         /* Scaler Wrapper - Centers and scales the game */
+        /* Scale wrapper not needed for responsive 3D, but kept for legacy or overlay UI if needed. 
+           Actually, for mixed mode (3D full, UI overlay), we want container to match window. */
         #game-scaler {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             background: #000;
-            overflow: hidden;
-            z-index: 0;
         }
 
-        /* Game Container - Fixed Design Resolution (400x300 for mobile-friendly scale) */
         #game-container {
-            width: 400px;
-            height: 300px;
+            width: 100%;
+            height: 100%;
             position: relative;
             overflow: hidden;
             background: transparent;
-            transform-origin: center center;
-            /* Scale applied by JavaScript */
         }
 
-        /* UI Panel - Fixed at bottom of game container */
-        #ui-panel {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        #game-canvas {
             width: 100%;
-            z-index: 900;
-            padding: 5px 8px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-            box-sizing: border-box;
-            font-size: 10px;
-            /* Flexbox layout */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+            height: 100%;
+            display: block;
         }
+
+        /* UI Panel styling is now defined later in the file (line ~760) */
 
         #ui-panel .btn-small {
             padding: 4px 6px;
@@ -619,16 +606,17 @@
             border-color: white;
         }
 
-        border-radius: 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.2s;
-        position: relative;
-        padding: 10px;
-        box-sizing: border-box;
+        .slot-card {
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .slot-card:hover {
@@ -751,6 +739,35 @@
             color: #aaa;
             text-align: center;
             line-height: 1.4;
+        }
+
+        #ui-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            /* Let clicks pass through empty space */
+            z-index: 1000;
+        }
+
+        .ui-panel-content {
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #555;
+            border-radius: 15px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            width: 90%;
+            max-width: 600px;
+            pointer-events: auto;
+            /* Re-enable clicks */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
         }
 
         #start-screen {
@@ -2206,46 +2223,47 @@
         <!-- Duplicates removed -->
 
         <div id="ui-panel">
-            <!-- 1. Left Group: Character Info (LV/HP + EXP) - Flexible width -->
-            <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
-                <!-- Top: LV / HP -->
-                <div style="display:flex;align-items:center;gap:8px;font-size:10px;">
-                    <span>👤 Lv.<span id="ui-lv">1</span></span>
-                    <span style="color:#e74c3c">❤️ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
-                </div>
-                <!-- Bottom: EXP Bar -->
-                <div
-                    style="background:#f0f0f0;padding:2px 4px;border-radius:3px;display:flex;align-items:center;gap:5px;">
-                    <span style="font-size:9px;color:#333;font-weight:bold;">EXP</span>
-                    <div style="flex:1;height:6px;background:#ccc;border-radius:3px;overflow:hidden;">
-                        <div id="exp-bar-fill"
-                            style="width:0%;height:100%;background:linear-gradient(90deg,#3498db,#2ecc71);transition:width 0.3s;">
+            <div class="ui-panel-content">
+                <!-- 1. Stats Group -->
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <div style="display:flex;align-items:center;gap:10px;font-size:12px;font-weight:bold;">
+                        <span>Lv.<span id="ui-lv">1</span></span>
+                        <span style="color:#e74c3c">♥ <span id="ui-hp">100</span>/<span id="ui-maxhp">100</span></span>
+                    </div>
+                    <!-- EXP Bar -->
+                    <div style="width:100%;height:6px;background:#444;border-radius:3px;overflow:hidden;">
+                        <div id="exp-bar-fill" style="width:0%;height:100%;background:#3498db;transition:width 0.3s;">
                         </div>
                     </div>
+                    <div style="font-size:10px;color:#aaa;">EXP <span id="ui-exp">0</span> / <span
+                            id="ui-maxexp">100</span></div>
                 </div>
-            </div>
 
-            <!-- 2. Center: Equipment & Currency (Compact) -->
-            <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;font-size:9px;">
-                <div style="display:flex;align-items:center;gap:4px;">
-                    <span id="ui-weapon-icon">🗡️</span>
-                    <span id="ui-weapon" style="font-weight:bold;">맨주먹</span>
+                <!-- 2. Weapon & Gold -->
+                <div
+                    style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;border-left:1px solid #444;border-right:1px solid #444;padding:0 10px;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <span id="ui-weapon-icon">🗡️</span>
+                        <span id="ui-weapon" style="font-size:11px;font-weight:bold;white-space:nowrap;">Wooden
+                            Sword</span>
+                    </div>
+                    <div style="display:flex;gap:10px;font-size:11px;color:#f1c40f;">
+                        <span>💰 <span id="ui-gold">0</span></span>
+                        <span style="color:#3498db">💎 <span id="ui-diamond">0</span></span>
+                    </div>
                 </div>
-                <div style="display:flex;gap:8px;">
-                    <span class="gold-txt">💰<span id="ui-gold">0</span></span>
-                    <span style="color:#00bcd4;">💎<span id="ui-diamond">0</span></span>
-                </div>
-            </div>
 
-            <!-- 3. 오른쪽 그룹: 메뉴 버튼 그리드 (2줄) -->
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;">
-                <!-- 윗줄: 상점, 뽑기 -->
-                <button class="btn-small" onclick="game.openShop()">⛺ 상점</button>
-                <button class="btn-small" onclick="game.openGacha()">🎰 뽑기</button>
-                <!-- 아랫줄: 가방, 스탯, 설정 -->
-                <button class="btn-small" onclick="game.openInventory()">🎒 가방</button>
-                <button class="btn-small" onclick="game.openStatPanel()">📊 스탯</button>
-                <button class="btn-small" onclick="settings.open()" style="grid-column:span 2;">⚙️ 설정</button>
+                <!-- 3. Menu Buttons -->
+                <div class="menu-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:5px;">
+                    <button class="btn-menu" onclick="game.openShop()">상점</button>
+                    <button class="btn-menu" onclick="game.openGacha()">뽑기</button>
+                    <button class="btn-menu"
+                        onclick="document.getElementById('inventory-overlay').style.display='flex';game.renderInventory()">가방</button>
+                    <button class="btn-menu" onclick="game.openEnhanceUI()">강화</button>
+                    <button class="btn-menu"
+                        onclick="document.getElementById('stat-overlay').style.display='flex'">스탯</button>
+                    <button class="btn-menu" onclick="game.openSettings()">설정</button>
+                </div>
             </div>
         </div>
 
@@ -2280,28 +2298,11 @@
 
     <script>
         // ===== VIEWPORT SCALING SYSTEM =====
-        // "Letterbox Scaling" with padding - fills screen minus safe padding
-        const DESIGN_WIDTH = 400;
-        const DESIGN_HEIGHT = 300;
-        const VIEWPORT_PADDING = 20; // Padding on all sides (adjustable)
-
+        // Responsive Full-Screen Mode - Game fills entire window
         function updateViewportScale() {
-            const container = document.getElementById('game-container');
-            if (!container) return;
-
-            // Available space = viewport minus padding
-            const availableWidth = window.innerWidth - (VIEWPORT_PADDING * 2);
-            const availableHeight = window.innerHeight - (VIEWPORT_PADDING * 2);
-
-            // Calculate scale to fit while maintaining aspect ratio
-            const scaleX = availableWidth / DESIGN_WIDTH;
-            const scaleY = availableHeight / DESIGN_HEIGHT;
-            const scale = Math.min(scaleX, scaleY);
-
-            // Apply scale transform
-            container.style.transform = `scale(${scale})`;
-
-            console.log(`📐 Viewport: ${window.innerWidth}x${window.innerHeight}, padding=${VIEWPORT_PADDING}, scale=${scale.toFixed(3)}`);
+            // No scaling transform needed - CSS handles 100% width/height
+            // This function is kept for potential future use or debugging
+            console.log(`📐 Viewport: ${window.innerWidth}x${window.innerHeight}`);
         }
 
         // Apply on load and resize
@@ -4817,16 +4818,27 @@
 
             init() {
                 const container = document.getElementById('game-canvas');
-                const w = 800;
-                const h = 500;
+
+                // Responsive Full Screen
+                const w = window.innerWidth;
+                const h = window.innerHeight;
 
                 this.scene = new THREE.Scene();
-                // Phase 2: Skybox will be added in createSkybox()
                 this.scene.background = new THREE.Color(0x87CEEB);
 
+                this.baseCamPos = new THREE.Vector3(0, 1.5, 3); // Base Z=3
                 this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
-                this.camera.position.copy(this.baseCamPos); // Use base position
-                this.camera.lookAt(0, -1, -1); // Look at Character (Y=-2) Chest/Head area
+                this.camera.position.copy(this.baseCamPos);
+
+                // Handle Window Resize
+                window.addEventListener('resize', () => {
+                    if (!this.camera || !this.renderer) return;
+                    const newW = window.innerWidth;
+                    const newH = window.innerHeight;
+                    this.camera.aspect = newW / newH;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(newW, newH);
+                });
 
                 // Quality Enhancement: Improved Renderer Settings
                 this.renderer = new THREE.WebGLRenderer({
