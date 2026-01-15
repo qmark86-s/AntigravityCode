@@ -214,6 +214,24 @@
                 max-height: 90%;
             }
 
+            /* Responsive Stat Panel (Bottom Panel 1) */
+            #stat-panel {
+                width: 100% !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                border: none !important;
+                border-top: 2px solid #333 !important;
+                background: rgba(0, 0, 0, 0.85) !important;
+                position: fixed;
+                bottom: 0px;
+                /* Behind UI panel or part of it? */
+                /* User said "Bottom 2 panels", referring to UI and maybe this.
+                   Actually, let's Hide text stats on main screen mobile to clear view?
+                   Or make them very small. Let's make them fit. */
+                display: none !important;
+                /* Hide on mobile main screen to be cleaner, showing only inside Stat Menu */
+            }
+
             /* Stage Bar */
             #stage-display-bar {
                 top: calc(10px + env(safe-area-inset-top, 0));
@@ -251,6 +269,13 @@
             .btn-small {
                 padding: 10px 15px;
                 font-size: 14px;
+            }
+
+            /* Center visual elements */
+            #enemy-container {
+                top: 45% !important;
+                /* Adjust visual center */
+                transform: translate(-50%, -50%) !important;
             }
         }
 
