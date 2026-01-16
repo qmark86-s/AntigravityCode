@@ -1248,6 +1248,9 @@
             align-items: center;
             box-sizing: border-box;
             box-shadow: var(--shadow-md);
+            /* Phase 10: Ensure panel stays above overlays */
+            position: relative;
+            z-index: 2100;
         }
 
         .btn-small {
@@ -1801,6 +1804,12 @@
             /* Border & Shadow */
             border: 2px solid #fff;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+
+            /* Phase 10: Non-overlapping layout */
+            margin-bottom: 110px;
+            /* Push up above UI Panel (approx 100px) */
+            max-height: calc(100vh - 140px);
+            /* Adjust height to fit in top area */
         }
 
         .shop-window {
