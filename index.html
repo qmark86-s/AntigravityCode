@@ -574,8 +574,13 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 80px;
-            height: 80px;
+            /* Responsive: Scale with viewport min dimension */
+            width: 12vmin;
+            height: 12vmin;
+            min-width: 50px;
+            min-height: 50px;
+            max-width: 80px;
+            max-height: 80px;
             background: rgba(0, 0, 0, 0.6);
             border: 3px solid #7f8c8d;
             border-radius: 50%;
@@ -588,6 +593,24 @@
             color: white;
             transition: all 0.2s;
             user-select: none;
+            font-size: 2.5vmin;
+        }
+
+        /* Mobile Layout: Prevent overlap with center area */
+        @media (max-width: 600px) {
+            .ally-btn {
+                width: 14vmin;
+                height: 14vmin;
+                border-width: 2px;
+            }
+
+            #ally-slot-left {
+                left: 5px !important;
+            }
+
+            #ally-slot-right {
+                right: 5px !important;
+            }
         }
 
         .ally-btn:hover {
@@ -956,11 +979,7 @@
         }
 
         /* Stat panel adjustments for mobile */
-        #stat-panel {
-            bottom: 100px;
-            padding: 5px;
-            font-size: 8px;
-        }
+        /* #stat-panel removed */
 
 
         #start-screen {
@@ -1492,12 +1511,7 @@
             align-items: center;
         }
 
-        .shop-window {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 30px;
-            border-radius: 15px;
-            width: 350px;
-        }
+        /* .shop-window moved to Shared Modal Styles */
 
         .shop-item {
             display: flex;
@@ -1635,16 +1649,7 @@
             align-items: center;
         }
 
-        .stat-window {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 30px;
-            border-radius: 15px;
-            width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            text-align: center;
-            border: 3px solid #f1c40f;
-        }
+        /* .stat-window moved to Shared Modal Styles */
 
         .stat-window h2 {
             color: #f1c40f;
@@ -1775,15 +1780,46 @@
             box-sizing: border-box;
         }
 
-        .smith-window {
-            background: linear-gradient(135deg, #2d1f1f, #1a1a2e);
+        /* Shared Modal Window Styles for Scrolling */
+        .shop-window,
+        .stat-window,
+        .smith-window,
+        .settings-window {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
             padding: 25px;
             border-radius: 15px;
-            border: 2px solid #e67e22;
-            width: 500px;
-            max-height: calc(100vh - 60px);
+            /* Responsive Width */
+            width: 90vw;
+            max-width: 500px;
+
+            /* Vertical Scrolling Support */
+            max-height: 85vh;
             overflow-y: auto;
-            margin-bottom: 30px;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+
+            /* Border & Shadow */
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .shop-window {
+            /* Specific overrides if needed */
+        }
+
+        .stat-window {
+            border-color: #f1c40f;
+            text-align: center;
+        }
+
+        .smith-window {
+            background: linear-gradient(135deg, #2d1f1f, #1a1a2e);
+            border-color: #e67e22;
+        }
+
+        .settings-window {
+            border-color: #95a5a6;
+            text-align: center;
         }
 
         .smith-tab {
@@ -1933,13 +1969,18 @@
         }
 
         /* Home Button Style */
+        /* Home Button Style - Responsive */
         #btn-home {
             position: absolute;
             top: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
+            width: 8vmin;
+            height: 8vmin;
+            min-width: 40px;
+            min-height: 40px;
+            max-width: 60px;
+            max-height: 60px;
+            font-size: 4vmin;
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #fff;
             color: #fff;
@@ -1955,6 +1996,47 @@
         #btn-home:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
+        }
+
+        /* Top Stage Bar - Responsive */
+        #stage-display-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            white-space: nowrap;
+            width: fit-content;
+            max-width: 60%;
+            /* Ensure it doesn't overlap home button */
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 600px) {
+            #btn-home {
+                top: 10px;
+                right: 10px;
+                width: 10vmin;
+                height: 10vmin;
+            }
+
+            #stage-display-bar {
+                top: 10px;
+                max-width: 70%;
+                padding: 5px 15px;
+            }
+
+            /* Override inline font sizes for mobile */
+            #stage-display-bar span {
+                font-size: 3.5vmin !important;
+            }
         }
     </style>
 </head>
@@ -2054,48 +2136,51 @@
             </div>
 
             <div id="settings-overlay">
-                <h1>⚙️ 설정</h1>
+                <div class="settings-window">
+                    <h1>⚙️ 설정</h1>
 
-                <!-- 캐릭터 슬롯 섹션 -->
-                <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
-                    <h2>💾 캐릭터 슬롯</h2>
-                    <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
-                    <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
-                        <!-- JS populated via game.updateSettingsSlotUI -->
+                    <!-- 캐릭터 슬롯 섹션 -->
+                    <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
+                        <h2>💾 캐릭터 슬롯</h2>
+                        <p style="font-size:12px;color:#888;margin-bottom:10px;">다이아는 모든 캐릭터가 공유합니다.</p>
+                        <div id="slot-container" style="display:flex;gap:10px;justify-content:center;">
+                            <!-- JS populated via game.updateSettingsSlotUI -->
+                        </div>
                     </div>
-                </div>
 
-                <!-- 게임 설정 섹션 -->
-                <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
-                    <h2>🎮 게임 설정</h2>
-                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                            <input type="checkbox" id="opt-autosave" checked
-                                onchange="game.autoSave = this.checked; game.saveProgress();">
-                            💾 자동저장
-                        </label>
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                            <input type="checkbox" id="opt-dmgtext" checked
-                                onchange="game.showDamageText = this.checked; game.saveProgress();">
-                            💥 데미지 텍스트 표시
-                        </label>
+                    <!-- 게임 설정 섹션 -->
+                    <div style="margin:20px 0;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;">
+                        <h2>🎮 게임 설정</h2>
+                        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                <input type="checkbox" id="opt-autosave" checked
+                                    onchange="game.autoSave = this.checked; game.saveProgress();">
+                                💾 자동저장
+                            </label>
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                <input type="checkbox" id="opt-dmgtext" checked
+                                    onchange="game.showDamageText = this.checked; game.saveProgress();">
+                                💥 데미지 텍스트 표시
+                            </label>
+                        </div>
+                        <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️
+                            캐릭터
+                            초기화</button>
                     </div>
-                    <button class="btn-reset" style="margin-top:15px;width:100%;" onclick="game.resetProgress()">🗑️ 캐릭터
-                        초기화</button>
-                </div>
 
-                <!-- 리소스 설정 섹션 -->
-                <div style="margin:20px 0">
-                    <h2>🗡️ 무기</h2>
-                    <div id="set-weapons"></div>
-                    <h2>👾 몬스터</h2>
-                    <div id="set-monsters"></div>
-                    <h2>🌄 배경</h2>
-                    <div id="set-backgrounds"></div>
+                    <!-- 리소스 설정 섹션 -->
+                    <div style="margin:20px 0">
+                        <h2>🗡️ 무기</h2>
+                        <div id="set-weapons"></div>
+                        <h2>👾 몬스터</h2>
+                        <div id="set-monsters"></div>
+                        <h2>🌄 배경</h2>
+                        <div id="set-backgrounds"></div>
+                    </div>
+                    <button class="btn-save" onclick="settings.save()">💾 리소스 저장</button>
+                    <button class="btn-reset" onclick="settings.reset()">🔄 리소스 초기화</button>
+                    <button class="btn-small" style="margin-top:20px" onclick="game.closeSettings()">닫기</button>
                 </div>
-                <button class="btn-save" onclick="settings.save()">💾 리소스 저장</button>
-                <button class="btn-reset" onclick="settings.reset()">🔄 리소스 초기화</button>
-                <button class="btn-small" style="margin-top:20px" onclick="settings.close()">닫기</button>
             </div>
 
             <div id="shop-overlay">
@@ -2433,43 +2518,15 @@
                 <div class="menu-grid">
                     <button class="btn-menu" onclick="game.openShop()">상점</button>
                     <button class="btn-menu" onclick="game.openGacha()">뽑기</button>
-                    <button class="btn-menu"
-                        onclick="document.getElementById('inventory-overlay').style.display='flex';game.renderInventory()">가방</button>
-                    <button class="btn-menu" onclick="game.openEnhanceUI()">강화</button>
-                    <button class="btn-menu"
-                        onclick="document.getElementById('stat-overlay').style.display='flex'">스탯</button>
+                    <button class="btn-menu" onclick="game.openInventory()">가방</button>
+                    <button class="btn-menu" onclick="game.openSmith()">강화</button>
+                    <button class="btn-menu" onclick="game.openStatPanel()">스탯</button>
                     <button class="btn-menu" onclick="game.openSettings()">설정</button>
                 </div>
             </div>
         </div>
 
-        <div id="stat-panel">
-            <div class="stat-box stat-atk">
-                <div class="stat-icon">⚔️</div>
-                <div class="stat-name">공격력</div>
-                <div class="stat-value" id="stat-atk">10</div>
-            </div>
-            <div class="stat-box stat-hp">
-                <div class="stat-icon">❤️</div>
-                <div class="stat-name">최대체력</div>
-                <div class="stat-value" id="stat-maxhp">100</div>
-            </div>
-            <div class="stat-box stat-aspd">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-name">공격속도</div>
-                <div class="stat-value" id="stat-aspd">1.00</div>
-            </div>
-            <div class="stat-box stat-crit">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-name">치명타확률</div>
-                <div class="stat-value" id="stat-crit">5.0%</div>
-            </div>
-            <div class="stat-box stat-critdmg">
-                <div class="stat-icon">💥</div>
-                <div class="stat-name">치명타배수</div>
-                <div class="stat-value" id="stat-critdmg">150%</div>
-            </div>
-        </div>
+        <!-- Stat Panel Removed (Refactored to Modal) -->
     </div><!-- end game-scaler -->
 
     <script>
@@ -3632,15 +3689,67 @@
                 }, 1200);
             }
 
-            // 모든 오버레이 닫기
+            // 모든 오버레이 닫기 + 스테이지 바 숨기기
             closeAllOverlays() {
+                // UI 오버레이 숨김
                 document.getElementById('shop-overlay').style.display = 'none';
                 document.getElementById('gacha-overlay').style.display = 'none';
                 document.getElementById('stat-overlay').style.display = 'none';
                 document.getElementById('settings-overlay').style.display = 'none';
                 document.getElementById('inventory-overlay').style.display = 'none';
                 document.getElementById('smith-overlay').style.display = 'none';
+
+                // 스테이지 정보바 & 동료 버튼 숨김 (메뉴 집중 모드)
+                const stageBar = document.getElementById('stage-display-bar');
+                if (stageBar) stageBar.style.display = 'none';
+
+                document.getElementById('ally-slot-left').style.display = 'none';
+                document.getElementById('ally-slot-right').style.display = 'none';
             }
+
+            // 게임 뷰 복구 (메뉴 닫기 공통 로직)
+            restoreGameView() {
+                this.closeAllOverlays(); // 일단 다 닫고
+
+                // 스테이지 바 & 동료 버튼 복구
+                const stageBar = document.getElementById('stage-display-bar');
+                if (stageBar) stageBar.style.display = 'flex'; // CSS flex
+
+                document.getElementById('ally-slot-left').style.display = 'flex';
+                document.getElementById('ally-slot-right').style.display = 'flex';
+            }
+
+            // 다이아 배속 구매
+            openSettings() {
+                this.closeAllOverlays();
+                document.getElementById('settings-overlay').style.display = 'flex';
+                this.updateSettingsSlotUI();
+            }
+
+            closeSettings() {
+                this.restoreGameView();
+            }
+
+            updateSettingsSlotUI() {
+                const container = document.getElementById('slot-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+                [1, 2, 3].forEach(i => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-small';
+                    btn.style.margin = '0 5px';
+                    // Basic indication of slot
+                    btn.innerText = `Slot ${i}`;
+                    // Placeholder action
+                    btn.onclick = () => {
+                        // logic to switch slot would go here
+                        console.log(`Switch to Slot ${i} requested`);
+                    };
+                    container.appendChild(btn);
+                });
+            }
+
 
             openShop() {
                 this.closeAllOverlays();
@@ -3661,7 +3770,7 @@
             }
 
             closeShop() {
-                document.getElementById('shop-overlay').style.display = 'none';
+                this.restoreGameView();
             }
 
             updateShopEquipment() {
@@ -3852,7 +3961,7 @@
             }
 
             closeGacha() {
-                document.getElementById('gacha-overlay').style.display = 'none';
+                this.restoreGameView();
             }
 
             doGacha(count) {
@@ -4086,11 +4195,8 @@
                 const w = this.p.equippedWeapon || this.r.weapons[this.p.wIdx] || this.r.weapons[0];
                 const weaponAtk = this.getWeaponAtk(w);
                 const totalAtk = this.p.atk + weaponAtk;
-                document.getElementById('stat-atk').innerText = NumFormat.format(totalAtk);
-                document.getElementById('stat-maxhp').innerText = NumFormat.format(this.p.maxHp);
-                document.getElementById('stat-aspd').innerText = this.p.aspd.toFixed(2);
-                document.getElementById('stat-crit').innerText = NumFormat.percent(this.p.critRate, 1);
-                document.getElementById('stat-critdmg').innerText = NumFormat.percent(this.p.critDmg, 0);
+                // Stat Panel removed
+
 
                 // 무기 이름에 등급 색상 적용
                 const gradeInfo = this.getGradeInfo(w.grade);
@@ -4191,7 +4297,7 @@
             }
 
             closeStatPanel() {
-                document.getElementById('stat-overlay').style.display = 'none';
+                this.restoreGameView();
             }
 
             updateStatPanel() {
@@ -4260,21 +4366,16 @@
             openInventory() {
                 this.closeAllOverlays();
                 document.getElementById('inventory-overlay').style.display = 'flex';
-                // Hide ally buttons when inventory is open
-                document.getElementById('ally-slot-left').style.display = 'none';
-                document.getElementById('ally-slot-right').style.display = 'none';
                 this.renderInventory();
             }
 
             closeInventory() {
-                document.getElementById('inventory-overlay').style.display = 'none';
-                // Show ally buttons when inventory is closed
-                document.getElementById('ally-slot-left').style.display = 'flex';
-                document.getElementById('ally-slot-right').style.display = 'flex';
+                this.restoreGameView();
             }
 
             // ===== 대장간 시스템 =====
             openSmith() {
+                this.closeAllOverlays();
                 document.getElementById('smith-overlay').style.display = 'flex';
                 this.synthesisSlots = [null, null, null];
                 this.enhanceTarget = null;
@@ -4282,7 +4383,7 @@
             }
 
             closeSmith() {
-                document.getElementById('smith-overlay').style.display = 'none';
+                this.restoreGameView();
             }
 
             switchSmithTab(tab) {
