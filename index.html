@@ -3224,6 +3224,7 @@
                     el.style.animationDuration = '0.5s';
                 });
                 document.getElementById('enemy-container').style.display = 'none';
+                if (window.game3d) window.game3d.removeEnemy();
                 // Base delay reduced from 2000ms to 1000ms for faster pacing
                 setTimeout(() => { if (this.state === 'WALK') this.meet(); }, 1000 / speed);
             }
@@ -3293,37 +3294,44 @@
                 this.updateStageDisplay();
 
                 // UI 업데이트
+                // UI 업데이트
                 const em = document.getElementById('enemy-emoji');
                 const im = document.getElementById('enemy-img');
                 const ec = document.getElementById('enemy-container');
 
-                ec.style.display = 'flex';
+                // 2D Container Hidden for 3D Perspective Mode
+                ec.style.display = 'none';
+
+                // Call 3D Spawn
+                if (window.game3d) {
+                    window.game3d.spawnEnemy(this.e, isBoss);
+                } else {
+                    // Fallback if 3D not init
+                    ec.style.display = 'flex';
+                }
+
+                // Logic below (isImage, etc) effectively skipped or irrelevant if 3D handled it, 
+                // but we keep it inside the else block or just leave it for potential fallback?
+                // For cleanliness, we can simplify given we are 100% 3D now.
+                // Let's keep minimal fallback.
 
                 const isImage = this.e.icon.indexOf('http') === 0 || this.e.icon.indexOf('data:') === 0 || this.e.icon.indexOf('assets/') === 0;
-                if (isImage) {
-                    em.style.display = 'none';
-                    im.style.display = 'block';
-                    im.src = this.e.icon;
-
-                    // 보스면 1.5배 크게 표시
-                    im.style.transform = isBoss ? 'scale(1.5)' : 'scale(1)';
-
-                    // Visual Variation: Hue Rotate based on cycle
-                    // Cycle 0: 0deg, Cycle 1: 45deg, ...
-                    const hueVal = (this.e.cycle * 45) % 360;
-                    const filterStyle = isBoss ? `drop-shadow(0 0 30px gold) hue-rotate(${hueVal}deg)` : `drop-shadow(0 0 20px rgba(255,0,0,0.5)) hue-rotate(${hueVal}deg)`;
-                    im.style.filter = filterStyle;
-
-                    // Reset Animation
-                    im.style.animation = 'none';
-                    im.offsetHeight; /* trigger reflow */
-                    im.style.animation = 'enemyApproach 0.5s ease-out forwards';
-                } else {
-                    im.style.display = 'none';
-                    em.style.display = 'block';
-                    em.innerText = this.e.icon;
-                    // Apply hue filter to emoji too? No, usually not possible easily or looks weird.
-                    // Assuming images for most monsters.
+                if (!window.game3d) {
+                    if (isImage) {
+                        em.style.display = 'none';
+                        im.style.display = 'block';
+                        im.src = this.e.icon;
+                        im.style.transform = isBoss ? 'scale(1.5)' : 'scale(1)';
+                        const hueVal = (this.e.cycle * 45) % 360;
+                        im.style.filter = isBoss ? `drop-shadow(0 0 30px gold) hue-rotate(${hueVal}deg)` : `drop-shadow(0 0 20px rgba(255,0,0,0.5)) hue-rotate(${hueVal}deg)`;
+                        im.style.animation = 'none';
+                        im.offsetHeight;
+                        im.style.animation = 'enemyApproach 0.5s ease-out forwards';
+                    } else {
+                        im.style.display = 'none';
+                        em.style.display = 'block';
+                        em.innerText = this.e.icon;
+                    }
                 }
 
                 // Legacy hud-name/hud-stage removed (Phase 7) - now using top bar
@@ -3577,6 +3585,7 @@
                 this.p.hp = this.p.maxHp;
 
                 document.getElementById('enemy-container').style.display = 'none';
+                if (window.game3d) window.game3d.removeEnemy();
                 this.updateUI();
                 this.saveProgress(); // 자동저장
                 const speed = this.getSpeedMultiplier();
@@ -5862,7 +5871,103 @@
                     });
                 }
 
+                // Phase 8: Enemy Approach Animation (Lerp)
+                if (this.currentEnemyMesh && this.enemyTargetZ !== undefined) {
+                    // Smoothly move enemy to target Z
+                    // Speed factor 2.0 -> Reaches usually in ~1-1.5s
+                    const speed = 3.0 * delta;
+                    this.currentEnemyMesh.position.z += (this.enemyTargetZ - this.currentEnemyMesh.position.z) * speed;
+
+                    // Stop jitter when close
+                    if (Math.abs(this.currentEnemyMesh.position.z - this.enemyTargetZ) < 0.1) {
+                        this.currentEnemyMesh.position.z = this.enemyTargetZ;
+                    }
+                }
+
                 this.renderer.render(this.scene, this.camera);
+            }
+
+            // --- 3D Enemy System ---
+            spawnEnemy(data, isBoss) {
+                this.removeEnemy(); // Clear existing
+
+                // Determine if Image or Emoji
+                const isImage = data.icon && (data.icon.indexOf('http') === 0 || data.icon.indexOf('data:') === 0 || data.icon.indexOf('assets/') === 0);
+
+                if (isImage) {
+                    // Check if file protocol blocks texture
+                    const isFile = window.location.protocol === 'file:';
+                    const isDataUri = data.icon.indexOf('data:') === 0;
+
+                    if (!isFile || isDataUri) {
+                        new THREE.TextureLoader().load(data.icon, (tex) => {
+                            tex.colorSpace = THREE.SRGBColorSpace;
+                            const mat = new THREE.SpriteMaterial({ map: tex });
+                            this.createEnemySprite(mat, isBoss);
+                        }, undefined, (err) => {
+                            console.warn("Enemy Texture Load Failed, fallback to Emoji", err);
+                            this.spawnEmojiEnemy(data.icon || "👺", isBoss);
+                        });
+                    } else {
+                        // Fallback for local file protocol
+                        this.spawnEmojiEnemy(data.icon || "👺", isBoss);
+                    }
+                } else {
+                    this.spawnEmojiEnemy(data.icon || "👾", isBoss);
+                }
+            }
+
+            spawnEmojiEnemy(emoji, isBoss) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                ctx.font = '180px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = isBoss ? '#ff0000' : '#ffffff'; // Red glow for boss? No, text color.
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = isBoss ? 'gold' : 'black';
+
+                ctx.fillText(emoji, 128, 148); // Vertical adjust
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.SpriteMaterial({ map: tex });
+                this.createEnemySprite(mat, isBoss);
+            }
+
+            createEnemySprite(material, isBoss) {
+                const sprite = new THREE.Sprite(material);
+                // Size: Boss bigger
+                const scale = isBoss ? 5.0 : 3.5;
+                sprite.scale.set(scale, scale, 1);
+
+                // Start Position: Far away in the tunnel
+                const startZ = -60;
+                const endZ = -2; // In front of character (who is at Z=1? No, World Y=0 for floor. Character Z=1? Let's check.)
+                // Character was at Z=1. Camera Z=6. 
+                // So Enemy at Z=-2 is deeper in screen. 
+
+                sprite.position.set(0, 2.5, startZ); // Y=2.5 to float/stand? 
+                // Character Y=0 (Ground). Sprite origin is center. 
+                // If Scale=3.5, Height is 3.5. Center at 1.75 puts feet at 0.
+                sprite.position.y = scale / 2;
+
+                this.scene.add(sprite);
+                this.currentEnemyMesh = sprite;
+                this.enemyTargetZ = endZ;
+
+                // Log
+                console.log(`[Game3D] Enemy Spawned at Z=${startZ}, approaching ${endZ}`);
+            }
+
+            removeEnemy() {
+                if (this.currentEnemyMesh) {
+                    this.scene.remove(this.currentEnemyMesh);
+                    if (this.currentEnemyMesh.material.map) this.currentEnemyMesh.material.map.dispose();
+                    this.currentEnemyMesh.material.dispose();
+                    this.currentEnemyMesh = null;
+                }
             }
         }
 
