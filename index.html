@@ -812,6 +812,28 @@
             white-space: nowrap;
         }
 
+        /* Scale the game to fit the viewport */
+        #game-scaler {
+            transform-origin: top left;
+            /* Phase 11: Strict Flex Layout */
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game-container {
+            /* Phase 11: Flexible Game Area */
+            flex: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #2a2a3d 0%, #000 100%);
+            /* Ensure children (overlays) are positioned relative to this */
+        }
+
         .ui-panel-content .exp-bar-container {
             width: 100%;
             height: 6px;
@@ -880,30 +902,80 @@
             border-color: rgba(255, 255, 255, 0.5);
         }
 
+        /* Notification Badge */
+        .notification-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: #e74c3c;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            box-shadow: 0 0 5px #e74c3c;
+            display: none;
+            /* JS toggles this */
+            z-index: 10;
+        }
+
+        .notification-dot.active {
+            display: block;
+        }
+
         /* Mobile specific adjustments for the new HUD */
         @media (max-width: 600px) {
             .ui-panel-content {
-                gap: 10px;
+                gap: 5px;
                 padding: 8px 10px;
+                flex-wrap: wrap;
+                /* Allow wrapping */
+            }
+
+            .ui-panel-content .player-info {
+                flex: 1 1 auto;
+                /* Take space */
+                min-width: 120px;
+                order: 1;
             }
 
             .ui-panel-content .weapon-info {
-                display: none;
-                /* Hide middle section on very small screens to save space? Or compact it? */
-                /* Let's keep it but make it smaller or remove borders */
+                display: flex !important;
+                /* Force Show */
+                flex: 1 1 auto;
                 border: none;
-                padding: 0 5px;
+                padding: 0;
+                justify-content: flex-end;
+                /* Align right */
+                order: 2;
+                font-size: 11px;
             }
 
+            /* Stack Menu Grid on next row */
             .menu-grid {
-                grid-template-columns: repeat(3, 1fr);
-                /* Keep 3x2 */
+                order: 3;
+                width: 100%;
+                grid-template-columns: repeat(6, 1fr);
+                /* 6 columns for 6 buttons */
                 gap: 4px;
+                margin-top: 4px;
+                padding-top: 4px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
 
             .btn-menu {
-                padding: 6px 8px;
+                padding: 6px 2px;
                 font-size: 10px;
+                text-align: center;
+            }
+
+            #ui-weapon-icon {
+                font-size: 16px;
+            }
+
+            #ui-weapon {
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
 
@@ -1240,17 +1312,25 @@
         }
 
         #ui-panel {
-            width: 800px;
+            /* Phase 11: UI Panel Constraints */
+            flex: 0 0 auto;
+            /* Don't grow, don't shrink */
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            /* Center horizontally */
+
             padding: 10px 15px;
             background: var(--color-bg-card);
-            border: 2px solid var(--color-border);
-            border-radius: 12px;
+            border-top: 2px solid var(--color-border);
+            /* Border top only usually looks better for panels */
+            /* border-radius: 12px 12px 0 0; Optional rounded top */
             align-items: center;
             box-sizing: border-box;
             box-shadow: var(--shadow-md);
-            /* Phase 10: Ensure panel stays above overlays */
+            /* Ensure panel stays above overlays (though flex structure separates them naturally now) */
             position: relative;
-            z-index: 2100;
+            z-index: 2500;
         }
 
         .btn-small {
@@ -1310,11 +1390,13 @@
         }
 
         #shop-overlay {
-            position: fixed;
+            /* Phase 11: Constrain to Game Container */
+            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
+
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -1805,16 +1887,13 @@
             border: 2px solid #fff;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 
-            /* Phase 10: Non-overlapping layout */
-            margin-bottom: 110px;
-            /* Push up above UI Panel (approx 100px) */
-            max-height: calc(100vh - 140px);
-            /* Adjust height to fit in top area */
+            /* Phase 11: Clean up Legacy Hacks 
+               No longer need margin-bottom or calc height if container is flex:1 
+               But to be safe, let's keep max-height reasonable */
+            max-height: 90%;
         }
 
-        .shop-window {
-            /* Specific overrides if needed */
-        }
+
 
         .stat-window {
             border-color: #f1c40f;
@@ -2529,7 +2608,11 @@
                     <button class="btn-menu" onclick="game.openGacha()">뽑기</button>
                     <button class="btn-menu" onclick="game.openInventory()">가방</button>
                     <button class="btn-menu" onclick="game.openSmith()">강화</button>
-                    <button class="btn-menu" onclick="game.openStatPanel()">스탯</button>
+                    <button class="btn-menu" onclick="game.openSmith()">강화</button>
+                    <button class="btn-menu" id="btn-open-stat" onclick="game.openStatPanel()"
+                        style="position:relative;">
+                        스탯<div id="stat-noti" class="notification-dot"></div>
+                    </button>
                     <button class="btn-menu" onclick="game.openSettings()">설정</button>
                 </div>
             </div>
@@ -4233,6 +4316,14 @@
                 }
 
                 this.updateHand();
+
+                // Stat Notification
+                const noti = document.getElementById('stat-noti');
+                if (noti) {
+                    const points = this.p.availPoints || 0;
+                    if (points > 0) noti.classList.add('active');
+                    else noti.classList.remove('active');
+                }
             }
 
             // 무기 공격력 계산 (기본 × 등급 배수 × 강화 보너스)
