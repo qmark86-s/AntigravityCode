@@ -667,16 +667,16 @@
         /* 2D UI Layers - Enemy Container (Always Centered) */
         #enemy-container {
             position: absolute;
-            top: 40%;
-            /* Slightly above center for visual balance */
+            top: 60%;
+            /* Moved down from 40% to sit on the floor */
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10;
-            text-align: center;
+            width: 200px;
+            height: 200px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            width: auto;
+            z-index: 10;
             pointer-events: none;
         }
 
@@ -961,7 +961,7 @@
             padding: 5px;
             font-size: 8px;
         }
-        }
+
 
         #start-screen {
             position: absolute;
@@ -1096,20 +1096,7 @@
         }
 
         /* 몬스터 컨테이너 - 소실점(터널 안쪽)에 배치 */
-        #enemy-container {
-            position: absolute;
-            top: 15%;
-            left: 50%;
-            transform: translate(-50%, 0);
-            text-align: center;
-            display: none;
-            z-index: 30;
-            /* Fix: Center items perfectly */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+
 
         #enemy-emoji {
             font-size: 80px;
@@ -5015,7 +5002,7 @@
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x87CEEB);
 
-                this.baseCamPos = new THREE.Vector3(0, 1.5, 3); // Base Z=3
+                this.baseCamPos = new THREE.Vector3(0, 2.5, 6); // Zoomed out for full view
                 this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
                 this.camera.position.copy(this.baseCamPos);
 
@@ -5089,7 +5076,7 @@
                             this.model = gltf.scene;
                             this.scene.add(this.model);
                             this.scene.add(this.model);
-                            this.model.position.set(0, -2, 1); // Moved BACK (Z=1) closer to camera as requested
+                            this.model.position.set(0, 0, 1); // Normalized to Y=0 (Ground Level)
                             this.model.rotation.set(0, 0, 0); // Face Forward
                             // Create and Apply custom "Knight" Texture
                             const knightTex = this.createKnightTexture();
@@ -5294,25 +5281,25 @@
                 // 1. Floor
                 this.floorMesh = createPlane(tunnelWidth, tunnelLength, 'floor');
                 this.floorMesh.rotation.x = -Math.PI / 2;
-                this.floorMesh.position.set(0, -2, centerZ);
+                this.floorMesh.position.set(0, 0, centerZ); // Y=0
                 this.scene.add(this.floorMesh);
 
                 // 2. Ceiling
                 this.ceilingMesh = createPlane(tunnelWidth, tunnelLength, 'ceiling');
                 this.ceilingMesh.rotation.x = Math.PI / 2;
-                this.ceilingMesh.position.set(0, -2 + tunnelHeight, centerZ);
+                this.ceilingMesh.position.set(0, tunnelHeight, centerZ); // Y=0 + Height
                 this.scene.add(this.ceilingMesh);
 
                 // 3. Walls (Left & Right)
                 // PlaneGeometry(Width, Height) -> For walls, Width is Length(Z), Height is Height(Y)
                 this.wallLeftMesh = createPlane(tunnelLength, tunnelHeight, 'wallLeft');
                 this.wallLeftMesh.rotation.y = Math.PI / 2;
-                this.wallLeftMesh.position.set(-tunnelWidth / 2, -2 + tunnelHeight / 2, centerZ);
+                this.wallLeftMesh.position.set(-tunnelWidth / 2, tunnelHeight / 2, centerZ); // Centered vertically at H/2
                 this.scene.add(this.wallLeftMesh);
 
                 this.wallRightMesh = createPlane(tunnelLength, tunnelHeight, 'wallRight');
                 this.wallRightMesh.rotation.y = -Math.PI / 2;
-                this.wallRightMesh.position.set(tunnelWidth / 2, -2 + tunnelHeight / 2, centerZ);
+                this.wallRightMesh.position.set(tunnelWidth / 2, tunnelHeight / 2, centerZ);
                 this.scene.add(this.wallRightMesh);
 
                 // Initial Theme Load (Default Forest)
